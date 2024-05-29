@@ -2310,7 +2310,7 @@ void t_js_generator::generate_deserialize_container(ostream& out, t_type* ttype,
 
   // Declare variables, read header
   if (ttype->is_map()) {
-    out << indent() << prefix << " = {};" << '\n';
+    out << indent() << prefix << " = [];" << '\n';
 
     out << indent() << js_const_type_ << rtmp3 << " = input.readMapBegin();" << '\n';
     out << indent() << js_const_type_ << size << " = " << rtmp3 << ".size || 0;" << '\n';
@@ -2376,7 +2376,7 @@ void t_js_generator::generate_deserialize_map_element(ostream& out, t_map* tmap,
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
-  indent(out) << prefix << "[" << key << "] = " << val << ";" << '\n';
+  indent(out) << prefix << ".push({ key: " << key << ", value: " << val << "});" << '\n';
 }
 
 void t_js_generator::generate_deserialize_set_element(ostream& out, t_set* tset, string prefix) {
