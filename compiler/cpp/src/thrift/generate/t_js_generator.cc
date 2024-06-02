@@ -844,6 +844,33 @@ t_type* t_js_generator::get_contained_type(t_type* t) {
   return etype;
 }
 
+std::string get_member_type(t_type *ttype) {
+  if (ttype->is_map()) {
+    t_type *left_map = static_cast<t_map *>(ttype)->get_key_type();
+    t_type *right_map = static_cast<t_map *>(ttype)->get_val_type();
+    std::string left_map_name = (left_map->is_map() || left_map->is_set() || left_map->is_list()) ?
+      get_member_type(left_map) : (left_map->is_binary() ? "binary" : left_map->get_name());
+    std::string right_map_name = (right_map->is_map() || right_map->is_set() || right_map->is_list()) ?
+      get_member_type(right_map) : (right_map->is_binary() ? "binary" : right_map->get_name());
+    return "map<" +
+      left_map_name + ", " +
+      right_map_name +
+      ">";
+  } else if (ttype->is_set()) {
+    t_type *item = static_cast<t_set *>(ttype)->get_elem_type();
+    std::string item_name = (item->is_map() || item->is_set() || item->is_list()) ?
+      get_member_type(item) : (item->is_binary() ? "binary" : item->get_name());
+    return "set<" + item_name + ">";
+  } else if (ttype->is_list()) {
+    t_type *item = static_cast<t_list *>(ttype)->get_elem_type();
+    std::string item_name = (item->is_map() || item->is_set() || item->is_list()) ?
+      get_member_type(item) : (item->is_binary() ? "binary" : item->get_name());
+    return "list<" + item_name + ">";
+  } else {
+    return ttype->get_name();
+  }
+}
+
 /**
  * Generates a struct definition for a thrift data type. This is nothing in JS
  * where the objects are all just associative arrays (unless of course we
@@ -890,6 +917,24 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
 
   indent_up();
 
+  if (gen_ts_) {
+    // (tmarquesdonascimento):: Add thrift source getter to ts file
+    string ts_access = gen_node_ ? "public " : "";
+    f_types_ts_ << ts_indent() << ts_access << "__tsource?: string;" << '\n';
+
+    // (tmarquesdonascimento):: Add thrift type getter to ts file
+    f_types_ts_ << ts_indent() << ts_access << "__ttype?: string;" << '\n';
+  }
+
+  // (tmarquesdonascimento):: Add thrift source getter to js file
+  string ts_access = gen_node_ ? "public " : "";
+  out << indent() << "this." << "__tsource "
+                  << "= \"" << tstruct->get_program()->get_path() << "\";" << '\n';
+
+  // (tmarquesdonascimento):: Add thrift type getter to js file
+  out << indent() << "this." << "__ttype "
+                  << "= \"" << tstruct->get_name() << "\";" << '\n';
+
   // Call super() method on inherited Error class
   if (gen_node_ && is_exception) {
     if (gen_es6_) {
@@ -911,6 +956,10 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
       out << indent() << "this." << (*m_iter)->get_name() << " = " << dval << ";" << '\n';
     } else {
       out << indent() << dval << ";" << '\n';
+
+      // (tmarquesdonascimento):: Add thrift type member to js file
+      out << ts_indent() << "this." << "__" << (*m_iter)->get_name() << "__ttype "
+          << "= \"" + get_member_type((*m_iter)->get_type()) + "\";" << '\n';
     }
     if (gen_ts_) {
       string ts_access = gen_node_ ? "public " : "";
@@ -923,6 +972,10 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
 
       f_types_ts_ << ts_indent() << ts_access << member_name << optional_flag << ": "
                   << ts_get_type((*m_iter)->get_type()) << ";" << '\n';
+
+      // (tmarquesdonascimento):: Add thrift type member to ts file
+      f_types_ts_ << ts_indent() << ts_access << "__" << member_name << "__ttype?" << ": string;"
+                  << '\n';
     }
   }
 
@@ -2310,6 +2363,7 @@ void t_js_generator::generate_deserialize_container(ostream& out, t_type* ttype,
 
   // Declare variables, read header
   if (ttype->is_map()) {
+    // (tmarquesdonascimento): changes to handle complex maps
     out << indent() << prefix << " = [];" << '\n';
 
     out << indent() << js_const_type_ << rtmp3 << " = input.readMapBegin();" << '\n';
@@ -2376,6 +2430,7 @@ void t_js_generator::generate_deserialize_map_element(ostream& out, t_map* tmap,
   generate_deserialize_field(out, &fkey);
   generate_deserialize_field(out, &fval);
 
+  // (tmarquesdonascimento): changes to handle complex maps
   indent(out) << prefix << ".push({ key: " << key << ", value: " << val << "});" << '\n';
 }
 
