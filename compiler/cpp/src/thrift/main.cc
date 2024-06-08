@@ -909,9 +909,9 @@ bool skip_utf8_bom(FILE* f) {
 }
 
 /**
- * Parses a program
+ * Parses a program recursively
  */
-void parse(t_program* program, t_program* parent_program, std::set<std::string>& known_includes) {
+void parse_recursive(t_program* program, t_program* parent_program, std::set<std::string>& known_includes) {
   // Get scope file path
   string path = program->get_path();
   if( ! known_includes.insert(path).second) {
@@ -932,6 +932,7 @@ void parse(t_program* program, t_program* parent_program, std::set<std::string>&
     pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
 
   // Create new scope and scan for includes
+  pverbose("Parse Mode: INCLUDES\n", path.c_str());
   pverbose("Scanning %s for includes\n", path.c_str());
   g_parse_mode = INCLUDES;
   g_program = program;
@@ -950,13 +951,14 @@ void parse(t_program* program, t_program* parent_program, std::set<std::string>&
   vector<t_program*>& includes = program->get_includes();
   vector<t_program*>::iterator iter;
   for (iter = includes.begin(); iter != includes.end(); ++iter) {
-    parse(*iter, program, known_includes);
+    parse_recursive(*iter, program, known_includes);
   }
 
   // reset program doctext status before parsing a new file
   reset_program_doctext_info();
 
   // Parse the program file
+  pverbose("Parse Mode: PROGRAM\n", path.c_str());
   g_parse_mode = PROGRAM;
   g_program = program;
   g_scope = program->scope();
@@ -988,9 +990,102 @@ void parse(t_program* program, t_program* parent_program, std::set<std::string>&
 }
 
 /**
+ * Parses a program includes
+ */
+void parse_includes(t_program* program) {
+  // Get scope file path
+  string path = program->get_path();
+
+  // Set current dir global, which is used in the include_file function
+  g_curdir = directory_name(path);
+  g_curpath = path;
+
+  // Open the file
+  // skip UTF-8 BOM if there is one
+  yyin = fopen(path.c_str(), "r");
+  if (yyin == 0) {
+    failure("Could not open input file: \"%s\"", path.c_str());
+  }
+  if (skip_utf8_bom(yyin))
+    pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
+
+  // Create new scope and scan for includes
+  pverbose("Parse Mode: INCLUDES\n");
+  pverbose("Scanning %s for includes\n", path.c_str());
+  g_parse_mode = INCLUDES;
+  g_program = program;
+  g_scope = program->scope();
+  try {
+    yylineno = 1;
+    if (yyparse() != 0) {
+      failure("Parser error during include pass.");
+    }
+  } catch (string &x) {
+    failure(x.c_str());
+  }
+  fclose(yyin);
+
+  // reset program doctext status before parsing a new file
+  reset_program_doctext_info();
+}
+
+/**
+ * Parses a program types
+ */
+void parse_types(t_program* program, t_program* parent_program) {
+  // Get scope file path
+  string path = program->get_path();
+
+  // Set current dir global, which is used in the include_file function
+  g_curdir = directory_name(path);
+  g_curpath = path;
+
+  // Parse the program file
+  pverbose("Parse Mode: PROGRAM\n");
+  g_parse_mode = PROGRAM;
+  g_program = program;
+  g_scope = program->scope();
+  g_parent_scope = (parent_program != nullptr) ? parent_program->scope() : nullptr;
+  g_parent_prefix = program->get_name() + ".";
+
+  // Open the file
+  // skip UTF-8 BOM if there is one
+  yyin = fopen(path.c_str(), "r");
+  if (yyin == 0) {
+    failure("Could not open input file: \"%s\"", path.c_str());
+  }
+  if (skip_utf8_bom(yyin))
+    pverbose("Skipped UTF-8 BOM at %s\n", path.c_str());
+
+  pverbose("Parsing %s for types\n", path.c_str());
+  yylineno = 1;
+  try {
+    if (yyparse() != 0) {
+      failure("Parser error during types pass.");
+    }
+  } catch (string &x) {
+    failure(x.c_str());
+  }
+  fclose(yyin);
+}
+
+/**
  * Generate code
  */
-void generate(t_program* program, const vector<string>& generator_strings) {
+void generate(t_program* program, t_program* parent_program, const vector<string>& generator_strings, std::set<std::string>& known_includes) {
+
+  printf("start of recursion %s \n", program->get_path().c_str());
+
+  // (tmarquesdonascimento): Parse program
+  pverbose("Parse program: %s\n", program->get_path().c_str());
+  parse_includes(program);
+
+  // (tmarquesdonascimento): Check for include recursions
+  string path = program->get_path();
+  if( ! known_includes.insert(path).second) {
+    failure("Recursion detected, file: \"%s\"", path.c_str());
+  }
+
   // Oooohh, recursive code generation, hot!!
   if (gen_recurse) {
     program->set_recursive(true);
@@ -999,13 +1094,15 @@ void generate(t_program* program, const vector<string>& generator_strings) {
       // Propagate output path from parent to child programs
       include->set_out_path(program->get_out_path(), program->is_out_path_absolute());
 
-      generate(include, generator_strings);
+      generate(include, program, generator_strings, known_includes);
     }
   }
 
   // Generate code!
   try {
     pverbose("Program: %s\n", program->get_path().c_str());
+
+    parse_types(program, parent_program);
 
     if (dump_docs) {
       dump_docstrings(program);
@@ -1035,6 +1132,20 @@ void generate(t_program* program, const vector<string>& generator_strings) {
   } catch (const std::invalid_argument& invalid_argument_exception) {
     failure("Error: %s\n", invalid_argument_exception.what());
   }
+
+  // (tmarquesdonascimento): Check for include recursions
+  known_includes.erase(path);
+
+  // (tmarquesdonascimento) Undo recursive include parsing if recursive generation is enabled
+  if (gen_recurse) {
+    vector<t_program*>& includes = program->get_includes();
+    vector<t_program*>::iterator iter;
+    for (iter = includes.begin(); iter != includes.end(); ++iter) {
+      delete (*iter);
+    }
+  }
+
+  printf("reaching end of recursion %s \n", program->get_path().c_str());
 }
 
 void audit(t_program* new_program,
@@ -1047,7 +1158,7 @@ void audit(t_program* new_program,
   }
 
   std::set<std::string> old_includes;
-  parse(old_program, nullptr, old_includes);
+  parse_recursive(old_program, nullptr, old_includes);
 
   g_incl_searchpath = temp_incl_searchpath;
   if (!new_thrift_include_path.empty()) {
@@ -1055,7 +1166,7 @@ void audit(t_program* new_program,
   }
 
   std::set<std::string> new_includes;
-  parse(new_program, nullptr, new_includes);
+  parse_recursive(new_program, nullptr, new_includes);
 
   compare_namespace(new_program, old_program);
   compare_services(new_program->get_services(), old_program->get_services());
@@ -1274,19 +1385,9 @@ int main(int argc, char** argv) {
 
     program->set_include_prefix(include_prefix);
 
-    // Parse it!
-    std::set<std::string> known_includes;
-    parse(program, nullptr, known_includes);
-
-    // The current path is not really relevant when we are doing generation.
-    // Reset the variable to make warning messages clearer.
-    g_curpath = "generation";
-    // Reset yylineno for the heck of it.  Use 1 instead of 0 because
-    // That is what shows up during argument parsing.
-    yylineno = 1;
-
     // Generate it!
-    generate(program, generator_strings);
+    std::set<std::string> known_includes;
+    generate(program, nullptr, generator_strings, known_includes);
     delete program;
   }
 
