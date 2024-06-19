@@ -917,6 +917,19 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
 
   indent_up();
 
+  // Call super() method on inherited Error class
+  if (gen_node_ && is_exception) {
+    if (gen_es6_) {
+      indent(out) << "super(args);" << '\n';
+    } else {
+      indent(out) << "Thrift.TException.call(this, \"" << js_namespace(tstruct->get_program())
+        << tstruct->get_name() << "\");" << '\n';
+    }
+    out << indent() << "this.name = \"" << js_namespace(tstruct->get_program())
+        << tstruct->get_name() << "\";" << '\n';
+  }
+
+  // (tmarquesdonascimento):: Add thrift source and type info
   if (gen_ts_) {
     // (tmarquesdonascimento):: Add thrift source getter to ts file
     string ts_access = gen_node_ ? "public " : "";
@@ -935,17 +948,6 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
   out << indent() << "this." << "__ttype "
                   << "= \"" << tstruct->get_name() << "\";" << '\n';
 
-  // Call super() method on inherited Error class
-  if (gen_node_ && is_exception) {
-    if (gen_es6_) {
-      indent(out) << "super(args);" << '\n';
-    } else {
-      indent(out) << "Thrift.TException.call(this, \"" << js_namespace(tstruct->get_program())
-        << tstruct->get_name() << "\");" << '\n';
-    }
-    out << indent() << "this.name = \"" << js_namespace(tstruct->get_program())
-        << tstruct->get_name() << "\";" << '\n';
-  }
 
   // members with arguments
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
