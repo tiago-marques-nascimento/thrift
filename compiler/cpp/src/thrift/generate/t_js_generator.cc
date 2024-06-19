@@ -844,6 +844,7 @@ t_type* t_js_generator::get_contained_type(t_type* t) {
   return etype;
 }
 
+// (tmarquesdonascimento): method to get the ttype.
 std::string get_member_type(t_type *ttype) {
   if (ttype->is_map()) {
     t_type *left_map = static_cast<t_map *>(ttype)->get_key_type();
@@ -866,6 +867,8 @@ std::string get_member_type(t_type *ttype) {
     std::string item_name = (item->is_map() || item->is_set() || item->is_list()) ?
       get_member_type(item) : (item->is_binary() ? "binary" : item->get_name());
     return "list<" + item_name + ">";
+  } else if (ttype->is_binary()) {
+    return "binary";
   } else {
     return ttype->get_name();
   }
@@ -947,7 +950,6 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
   // (tmarquesdonascimento):: Add thrift type getter to js file
   out << indent() << "this." << "__ttype "
                   << "= \"" << tstruct->get_name() << "\";" << '\n';
-
 
   // members with arguments
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
