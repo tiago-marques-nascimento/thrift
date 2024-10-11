@@ -1,4 +1,5 @@
 {
+    "exclude": ["**/*.tsx"],
     "compilerOptions": {
         "allowJs": false,
         "alwaysStrict": true,
@@ -17,6 +18,6 @@
         "target": "es6",
         "paths": {
             "thrift": ["../../nodejs/lib/thrift"]
-        }
+        },
     }
 }
