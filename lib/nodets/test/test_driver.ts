@@ -59,10 +59,10 @@ export function ThriftTestDriver(client: ThriftTest.Client, callback: (status: s
     testCases.deep.forEach(makeAsserter(assert.deepEqual));
 
     client.testMapMap(42, function(err, response) {
-      var expected: typeof response = {
-        "4": {"1":1, "2":2, "3":3, "4":4},
-        "-4": {"-4":-4, "-3":-3, "-2":-2, "-1":-1}
-      };
+      var expected: typeof response = [
+        { key: 4, value: [ { key: 1, value: 1 }, { key: 2, value: 2 }, { key: 3, value: 3 }, { key: 4, value: 4 } ] },
+        { key: -4, value: [ { key: -4, value :-4 }, { key: -3, value: -3 }, { key: -2, value: -2 }, { key: -1, value: -1 } ] }
+      ];
       assert.error(err, 'testMapMap: no callback error');
       assert.deepEqual(expected, response, "testMapMap");
     });

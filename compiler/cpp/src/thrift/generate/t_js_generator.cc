@@ -844,6 +844,7 @@ t_type* t_js_generator::get_contained_type(t_type* t) {
   return etype;
 }
 
+// (tmarquesdonascimento): method to get the ttype.
 std::string get_member_type(t_type *ttype) {
   if (ttype->is_map()) {
     t_type *left_map = static_cast<t_map *>(ttype)->get_key_type();
@@ -866,6 +867,8 @@ std::string get_member_type(t_type *ttype) {
     std::string item_name = (item->is_map() || item->is_set() || item->is_list()) ?
       get_member_type(item) : (item->is_binary() ? "binary" : item->get_name());
     return "list<" + item_name + ">";
+  } else if (ttype->is_binary()) {
+    return "binary";
   } else {
     return ttype->get_name();
   }
@@ -947,7 +950,6 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
   // (tmarquesdonascimento):: Add thrift type getter to js file
   out << indent() << "this." << "__ttype "
                   << "= \"" << tstruct->get_name() << "\";" << '\n';
-
 
   // members with arguments
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
@@ -2560,14 +2562,17 @@ void t_js_generator::generate_serialize_container(ostream& out, t_type* ttype, s
                 << ", " << prefix << ".length);" << '\n';
   }
 
+  // (tmarquesdonascimento): serialize complex map fixes
   if (ttype->is_map()) {
+    string iter = tmp("iter");
     string kiter = tmp("kiter");
     string viter = tmp("viter");
-    indent(out) << "for (" << js_let_type_ << kiter << " in " << prefix << ") {" << '\n';
+    indent(out) << "for (" << js_let_type_ << iter << " in " << prefix << ") {" << '\n';
     indent_up();
-    indent(out) << "if (" << prefix << ".hasOwnProperty(" << kiter << ")) {" << '\n';
+    indent(out) << "if (" << prefix << ".hasOwnProperty(" << iter << ")) {" << '\n';
     indent_up();
-    indent(out) << js_let_type_ << viter << " = " << prefix << "[" << kiter << "];" << '\n';
+    indent(out) << js_let_type_ << kiter << " = " << prefix << "[" << iter << "].key;" << '\n';
+    indent(out) << js_let_type_ << viter << " = " << prefix << "[" << iter << "].value;" << '\n';
     generate_serialize_map_element(out, (t_map*)ttype, kiter, viter);
     scope_down(out);
     scope_down(out);
@@ -2846,16 +2851,7 @@ string t_js_generator::ts_get_type(t_type* type) {
     string ktype = ts_get_type(((t_map*)type)->get_key_type());
     string vtype = ts_get_type(((t_map*)type)->get_val_type());
 
-
-    if (ktype == "number" || ktype == "string" ) {
-      ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
-    } else if ((((t_map*)type)->get_key_type())->is_enum()) {
-      // Not yet supported (enum map): https://github.com/Microsoft/TypeScript/pull/2652
-      //ts_type = "{ [k: " + ktype + "]: " + vtype + "; }";
-      ts_type = "{ [k: number /*" + ktype + "*/]: " + vtype + "; }";
-    } else {
-      ts_type = "any";
-    }
+    ts_type = "{ key: " + ktype + ", value: " + vtype + " }[]";
   }
 
   return ts_type;
