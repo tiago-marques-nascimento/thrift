@@ -672,7 +672,7 @@ string t_js_generator::render_react_includes() {
     "import Thrift = thrift.Thrift;\n"
     "import Q = thrift.Q;\n"
     "import Int64 from 'node-int64';\n"
-    "import React, {useEffect, useState} from 'react';\n"
+    "import React, {useEffect, useState, useCallback} from 'react';\n"
     "import { Box, Label, SelectList, Text, Switch, Flex, Button, TextField, TextArea, Module, NumberField } from 'gestalt';\n"
   );
 
@@ -705,7 +705,7 @@ string t_js_generator::render_react_includes() {
  */
 string t_js_generator::render_react_consts() {
   return string(
-    "const CHUNK_LENGTH = 2;"
+    "const CHUNK_LENGTH = 2;\n"
     "const groupByChunk = (list: any[]) => {\n"
     "    const chunks: any[][] = [];\n"
     "    list.forEach((i, count) => {\n"
@@ -717,6 +717,319 @@ string t_js_generator::render_react_consts() {
     "        }\n"
     "    });\n"
     "    return chunks;\n"
+    "}\n"
+
+    "type ThriftInputProps = { value: any, setValue: Function, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftSelectListInputProps = { list: any[], value: any, setValue: Function, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftStructInputProps = { add: Function, remove?: Function, renderStruct: Function, value: any, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftChunkInputProps = { add: Function, list: any[], renderChunkList: Function, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftListInputProps = { remove: Function, chunk: number, list: any[], renderListItem: any, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftMapInputProps = { remove: Function, chunk: number, list: any[], renderMapKey: any, renderMapValue: any, readonly: boolean, keyProp: string, label: string };\n"
+
+    "const ThriftInputSwitch = ({ value, setValue, readonly, keyProp, label }: ThriftInputProps) => {\n"
+    "  const setValueCallback = useCallback(() => { setValue(); }, [setValue]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Label htmlFor={label}>\n"
+    "        <Text>{label}</Text>\n"
+    "      </Label>\n"
+    "      <Switch\n"
+    "        id={label}\n"
+    "        disabled={readonly}\n"
+    "        switched={value}\n"
+    "        onChange={() => setValueCallback() }\n"
+    "      />\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputNumberField = ({ value, setValue, readonly, keyProp, label }: ThriftInputProps) => {\n"
+    "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Label htmlFor={label}>\n"
+    "        <Text>{label}</Text>\n"
+    "      </Label>\n"
+    "      <NumberField\n"
+    "        id={label}\n"
+    "        disabled={readonly}\n"
+    "        placeholder='Enter a value'\n"
+    "        value={value}\n"
+    "        onChange={(e) => setValueCallback(e.value) }\n"
+    "      />\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputTextField = ({ value, setValue, readonly, keyProp, label }: ThriftInputProps) => {\n"
+    "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Label htmlFor={label}>\n"
+    "        <Text>{label}</Text>\n"
+    "      </Label>\n"
+    "      <TextField\n"
+    "        id={label}\n"
+    "        disabled={readonly}\n"
+    "        placeholder='Enter a value'\n"
+    "        value={value}\n"
+    "        onChange={(e) => setValueCallback(e.value) }\n"
+    "      />\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputTextArea = ({ value, setValue, readonly, keyProp, label }: ThriftInputProps) => {\n"
+    "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Label htmlFor={label}>\n"
+    "        <Text>{label}</Text>\n"
+    "      </Label>\n"
+    "      <TextArea\n"
+    "        id={label}\n"
+    "        disabled={readonly}\n"
+    "        placeholder='Enter a value'\n"
+    "        value={value}\n"
+    "        onChange={(e) => setValueCallback(e.value) }\n"
+    "      />\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputSelectList = ({ list, value, setValue, readonly, keyProp, label }: ThriftSelectListInputProps) => {\n"
+    "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Label htmlFor={label}>\n"
+    "        <Text>{label}</Text>\n"
+    "      </Label>\n"
+    "      <SelectList\n"
+    "        id={label}\n"
+    "        disabled={readonly}\n"
+    "        name={label}\n"
+    "        placeholder='Select a value from the dropdown list'\n"
+    "        value={value}\n"
+    "        onChange={(e) => setValueCallback(e.value) }\n"
+    "      >\n"
+    "      {list.map(value => <SelectList.Option value={value as string} label={value as string} key={value as string} />)}\n"
+    "      </SelectList>\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputStruct = ({ add, remove, renderStruct, value, readonly, keyProp, label }: ThriftStructInputProps) => {\n"
+    "  const addCallback = useCallback(() => { add(); }, [add]);\n"
+    "  const removeCallback = useCallback(() => { remove!(); }, [remove]);\n"
+    "  const renderStructCallback = useCallback(() => { return renderStruct(); }, [renderStruct]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      { (value) ?\n"
+
+    "        <Module.Expandable\n"
+    "          id={label}\n"
+    "          accessibilityExpandLabel='Expand the module'\n"
+    "          accessibilityCollapseLabel='Collapse the module'\n"
+    "          items={[\n"
+    "            {\n"
+    "              title: label,\n"
+    "              children: (\n"
+    "                <>\n"
+    "                  {renderStructCallback()}\n"
+    "                  {\n"
+    "                    remove &&\n"
+    "                    <Button\n"
+    "                      disabled={readonly}\n"
+    "                      text={`Remove ${label}`}\n"
+    "                      size='sm'\n"
+    "                      color='gray'\n"
+    "                      onClick={() => removeCallback()}\n"
+    "                    />\n"
+    "                  }\n"
+    "                </>\n"
+    "              ),\n"
+    "            }\n"
+    "          ]}\n"
+    "        /> :\n"
+    "        <Button\n"
+    "          disabled={readonly}\n"
+    "          text={`Add ${label}`}\n"
+    "          size='sm'\n"
+    "          color='gray'\n"
+    "          onClick={() => addCallback()}\n"
+    "        />\n"
+    "      }\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputChunk = ({ add, list, renderChunkList, readonly, keyProp, label }: ThriftChunkInputProps) => {\n"
+    "  const addCallback = useCallback(() => { add(); }, [add]);\n"
+    "  const renderChunkListCallback = useCallback((item: any, i: number) => { return renderChunkList(item, i); }, [renderChunkList]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Module.Expandable\n"
+    "        id={label}\n"
+    "        accessibilityExpandLabel='Expand the module'\n"
+    "        accessibilityCollapseLabel='Collapse the module'\n"
+    "        items={[\n"
+    "          {\n"
+    "            title: label,\n"
+    "            children: (\n"
+    "              <Box justifyContent='start' alignItems='baseline'>\n"
+    "                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                  {\n"
+    "                    groupByChunk(list)?.map((item: any, i: number) =>\n"
+    "                      {\n"
+    "                        return (\n"
+    "                          <Flex.Item flex='grow' key={i}>\n"
+    "                            <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                             {renderChunkListCallback(item, i)}\n"
+    "                            </Flex>\n"
+    "                          </Flex.Item>\n"
+    "                        );\n"
+    "                      }\n"
+    "                    )\n"
+    "                  }\n"
+    "                  <Flex.Item flex='grow'>\n"
+    "                    <Button\n"
+    "                      disabled={readonly}\n"
+    "                      text={`Add ${label}`}\n"
+    "                      size='sm'\n"
+    "                      color='gray'\n"
+    "                      onClick={() => addCallback()}\n"
+    "                    />\n"
+    "                  </Flex.Item>\n"
+    "                </Flex>\n"
+    "              </Box>\n"
+    "            ),\n"
+    "          }\n"
+    "        ]}\n"
+    "      />\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputList = ({ remove, chunk, list, renderListItem, readonly, keyProp, label }: ThriftListInputProps) => {\n"
+    "  const removeCallback = useCallback((item: any) => { remove(item); }, [remove]);\n"
+    "  const renderListItemCallback = useCallback((item: any, i: number) => { return renderListItem(item, i); }, [renderListItem]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Module.Expandable\n"
+    "        id={label}\n"
+    "        accessibilityExpandLabel='Expand the module'\n"
+    "        accessibilityCollapseLabel='Collapse the module'\n"
+    "        items={[\n"
+    "          {\n"
+    "            title: `label Chunk[${chunk}]`,\n"
+    "            children: (\n"
+    "              <Box justifyContent='start' alignItems='baseline'>\n"
+    "                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                  {\n"
+    "                    list?.map((item: any, i: number) =>\n"
+    "                      {\n"
+    "                        return (\n"
+    "                          <Flex.Item flex='grow' key={i}>\n"
+    "                            <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
+    "                              <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                <Flex.Item flex='grow'>\n"
+    "                                  <Label htmlFor={`${label} Item[${i}]`}>\n"
+    "                                    <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
+    "                                  </Label>\n"
+    "                                </Flex.Item>\n"
+    "                                {renderListItemCallback(item, i)}"
+    "                                <Flex.Item flex='grow'>\n"
+    "                                  <Button\n"
+    "                                    disabled={readonly}\n"
+    "                                    text={`Remove ${label}[${i}]`}\n"
+    "                                    size='sm'\n"
+    "                                    color='gray'\n"
+    "                                    onClick={() => removeCallback(item)}\n"
+    "                                  />\n"
+    "                                </Flex.Item>\n"
+    "                              </Flex>\n"
+    "                            </Box>\n"
+    "                          </Flex.Item>\n"
+    "                        );\n"
+    "                      }\n"
+    "                    )\n"
+    "                  }\n"
+    "                </Flex>\n"
+    "              </Box>\n"
+    "            ),\n"
+    "          }\n"
+    "        ]}\n"
+    "      />\n"
+    "    </Flex.Item>\n"
+    "  );\n"
+    "}\n"
+
+    "const ThriftInputMap = ({ remove, chunk, list, renderMapKey, renderMapValue, readonly, keyProp, label }: ThriftMapInputProps) => {\n"
+    "  const removeCallback = useCallback((item: any) => { remove(item); }, [remove]);\n"
+    "  const renderMapKeyCallback = useCallback((item: any, i: number) => { return renderMapKey(item, i); }, [renderMapKey]);\n"
+    "  const renderMapValueCallback = useCallback((item: any, i: number) => { return renderMapValue(item, i); }, [renderMapValue]);\n"
+    "  return (\n"
+    "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Module.Expandable\n"
+    "        id={label}\n"
+    "        accessibilityExpandLabel='Expand the module'\n"
+    "        accessibilityCollapseLabel='Collapse the module'\n"
+    "        items={[\n"
+    "          {\n"
+    "            title: `label Chunk[${chunk}]`,\n"
+    "            children: (\n"
+    "              <Box justifyContent='start' alignItems='baseline'>\n"
+    "                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                  {\n"
+    "                    list?.map((item: any, i: number) =>\n"
+    "                      {\n"
+    "                        return (\n"
+    "                          <Flex.Item flex='grow' key={i}>\n"
+    "                            <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
+    "                              <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                <Flex.Item flex='grow'>\n"
+    "                                  <Label htmlFor={`${label} Item[${i}]`}>\n"
+    "                                    <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
+    "                                  </Label>\n"
+    "                                </Flex.Item>\n"
+    "                                <Flex.Item flex='grow'>\n"
+    "                                  <Box justifyContent='start' alignItems='baseline'>\n"
+    "                                    <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                      {renderMapKeyCallback(item, i)}\n"
+    "                                    </Flex>\n"
+    "                                  </Box>\n"
+    "                                </Flex.Item>\n"
+    "                                <Flex.Item flex='grow'>\n"
+    "                                  <Box justifyContent='start' alignItems='baseline'>\n"
+    "                                    <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                      {renderMapValueCallback(item, i)}\n"
+    "                                    </Flex>\n"
+    "                                  </Box>\n"
+    "                                </Flex.Item>\n"
+    "                                <Flex.Item flex='grow'>\n"
+    "                                  <Button\n"
+    "                                    disabled={readonly}\n"
+    "                                    text={`Remove ${label}[${i}]`}\n"
+    "                                    size='sm'\n"
+    "                                    color='gray'\n"
+    "                                    onClick={() => removeCallback(item)}\n"
+    "                                  />\n"
+    "                                </Flex.Item>\n"
+    "                              </Flex>\n"
+    "                            </Box>\n"
+    "                          </Flex.Item>\n"
+    "                        );\n"
+    "                      }\n"
+    "                    )\n"
+    "                  }\n"
+    "                </Flex>\n"
+    "              </Box>\n"
+    "            ),\n"
+    "          }\n"
+    "        ]}\n"
+    "      />\n"
+    "    </Flex.Item>\n"
+    "  );\n"
     "}\n"
   );
 }
@@ -1057,26 +1370,27 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
   string member_name = (tfield)->get_name();
   bool is_optional = (tfield)->get_req() == t_field::e_req::T_OPTIONAL;
   string null_check = is_optional ? "" : "if(" + member_name + ") ";
+  t_type *true_member_type = (tfield)->get_type()->is_typedef() ? ((t_typedef *)(tfield)->get_type())->get_true_type() : (tfield)->get_type();
   if (
     (
-      (tfield)->get_type()->is_base_type() &&
-      ((t_base_type *)((tfield)->get_type()))->get_base() != t_base_type::TYPE_VOID
+      true_member_type->is_base_type() &&
+      ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_VOID
     ) ||
-    (tfield)->get_type()->is_binary() ||
-    (tfield)->get_type()->is_list() |
-    (tfield)->get_type()->is_set() ||
-    (tfield)->get_type()->is_map() ||
-    (tfield)->get_type()->is_enum() ||
-    (tfield)->get_type()->is_struct()
+    true_member_type->is_binary() ||
+    true_member_type->is_list() |
+    true_member_type->is_set() ||
+    true_member_type->is_map() ||
+    true_member_type->is_enum() ||
+    true_member_type->is_struct()
   ) {
 
     if (
-      (tfield)->get_type()->is_base_type() &&
-      ((t_base_type *)((tfield)->get_type()))->get_base() != t_base_type::TYPE_VOID
+      true_member_type->is_base_type() &&
+      ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_VOID
     ) {
-      if (((t_base_type *)((tfield)->get_type()))->get_base() == t_base_type::TYPE_I64) {
+      if (((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64) {
         
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>("");\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>('');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1086,11 +1400,14 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
         f_react_ts_ << "new Int64(BigInt(" << member_name << "?? '0').toString(16));\n";
 
         indent_down();
+
+        f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+        f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
       } else if (
-        ((t_base_type *)((tfield)->get_type()))->get_base() == t_base_type::TYPE_DOUBLE ||
-        ((t_base_type *)((tfield)->get_type()))->get_base() == t_base_type::TYPE_I32 ||
-        ((t_base_type *)((tfield)->get_type()))->get_base() == t_base_type::TYPE_I16 ||
-        ((t_base_type *)((tfield)->get_type()))->get_base() == t_base_type::TYPE_I8
+        ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_DOUBLE ||
+        ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I32 ||
+        ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I16 ||
+        ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8
       ) {
 
         f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(0);\n";
@@ -1102,8 +1419,11 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
                     << "Number(" << member_name << ");\n";
 
         indent_down();
+
+        f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+        f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: number) => { set" << capitalize(member_name) << "(value) };\n\n";
       } else if (
-        ((t_base_type *)((tfield)->get_type()))->get_base() == t_base_type::TYPE_BOOL
+        ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
       ) {
 
         f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<boolean>(false);\n";
@@ -1115,9 +1435,12 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
                     << member_name << " as boolean;\n";
 
         indent_down();
-      } else if ((tfield)->get_type()->is_binary()) {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>("");\n";
+        f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+        f_react_ts_ << ts_indent() << "const toggle" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "(!" << member_name << ") };\n\n";
+      } else if (true_member_type->is_binary()) {
+
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>('');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1126,9 +1449,12 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
                     << "Buffer.from(" << member_name << "?? '');\n";
 
         indent_down();
+
+        f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+        f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
       } else {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>("");\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>('');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1137,8 +1463,11 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
                     << member_name << ";\n";
 
         indent_down();
+
+        f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+        f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
       }
-    } else if ((tfield)->get_type()->is_list() || (tfield)->get_type()->is_set() || (tfield)->get_type()->is_map()) {
+    } else if (true_member_type->is_list() || true_member_type->is_set() || true_member_type->is_map()) {
 
       f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<any[]>([]);\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
@@ -1147,26 +1476,32 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
                   << "!!" << member_name << " ? "
                   << "[..." << member_name << "] : "
-                  << "[];";
+                  << "[];\n";
 
       indent_down();
-    } else if ((tfield)->get_type()->is_enum()) {
 
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(Object.values(" << find_include_2_import_name((tfield)->get_type()->get_program()) << "_module." << (tfield)->get_type()->get_name() << ")[0] as string);\n";
+      f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+      f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "([..." << member_name << "]) };\n\n";
+    } else if (true_member_type->is_enum()) {
+
+      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(Object.values(" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << ")[0] as string);\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
-      if ((tfield)->get_type()->get_program() == tstruct->get_program()) {
+      if (true_member_type->get_program() == tstruct->get_program()) {
         f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << find_include_2_import_name((tfield)->get_type()->get_program()) << "_module." << (tfield)->get_type()->get_name() << "[" << member_name << " as " << (tfield)->get_type()->get_name() << "Type];\n";
+                    << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[" << member_name << " as " << true_member_type->get_name() << "Type];\n";
       } else {
         f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << find_include_2_import_name((tfield)->get_type()->get_program()) << "_module." << (tfield)->get_type()->get_name() << "[" << member_name << " as " << find_include_2_import_name_react((tfield)->get_type()->get_program()) << "_module." << (tfield)->get_type()->get_name() << "Type];\n";
+                    << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[" << member_name << " as " << find_include_2_import_name_react(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "Type];\n";
       }
 
       indent_down();
-    } else if ((tfield)->get_type()->is_struct()) {
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<" << find_include_2_import_name((tfield)->get_type()->get_program()) << "_module." << (tfield)->get_type()->get_name() << ">();\n";
+
+      f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+      f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
+    } else if (true_member_type->is_struct()) {
+      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << ">();\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
@@ -1175,8 +1510,10 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
                   << member_name << ";\n";
 
       indent_down();
+
+      f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
+      f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value?: " << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << ") => { set" << capitalize(member_name) << "(value as " << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << " | undefined) };\n\n";
     }
-    f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n\n";
   }
 }
 
@@ -1191,28 +1528,29 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string null_type_check = "if (prop" + tstruct->get_name() + "." + (*m_iter)->get_name() + ") ";
     t_type *member_type = (*m_iter)->get_type();
+    t_type *true_member_type = member_type->is_typedef() ? ((t_typedef *)member_type)->get_true_type() : member_type;
 
     if (
       (
-        member_type->is_base_type() &&
-        !member_type->is_binary() &&
-        ((t_base_type *)(member_type))->get_base() != t_base_type::TYPE_VOID &&
-        ((t_base_type *)(member_type))->get_base() != t_base_type::TYPE_I64
+        true_member_type->is_base_type() &&
+        !true_member_type->is_binary() &&
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_VOID &&
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I64
       ) ||
-      member_type->is_list() ||
-      member_type->is_set() ||
-      member_type->is_map() ||
-      member_type->is_struct()
+      true_member_type->is_list() ||
+      true_member_type->is_set() ||
+      true_member_type->is_map() ||
+      true_member_type->is_struct()
     ) {
       f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ");\n";
     } else if (
-      member_type->is_base_type() &&
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I64
+      true_member_type->is_base_type() &&
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64
     ) {
       f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(BigInt('0x' + (prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ").toOctetString()).toString());\n";
-    } else if (member_type->is_binary()) {
+    } else if (true_member_type->is_binary()) {
       f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ".toString('hex'));\n";
-    } else if (member_type->is_enum()) {
+    } else if (true_member_type->is_enum()) {
       f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(" << find_include_2_import_name((*m_iter)->get_type()->get_program()) << "_module." << (*m_iter)->get_type()->get_name() << "[prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << "]);\n";
     }
   }
@@ -1223,40 +1561,42 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
 
 // (tmarquesdonascimento): method to get the react component.
 string t_js_generator::new_react_object(t_type *member_type) {
+  t_type *true_member_type = member_type->is_typedef() ? ((t_typedef *)member_type)->get_true_type() : member_type;
+
   if (
-    member_type->is_base_type() &&
-    ((t_base_type *)(member_type))->get_base() != t_base_type::TYPE_VOID
+    true_member_type->is_base_type() &&
+    ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_VOID
   ) {
     if (
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_BOOL
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
     ) {
       return "false";
     } else if (
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I8 ||
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I16 ||
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I32 ||
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_DOUBLE
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I16 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I32 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_DOUBLE
     ) {
       return "0";
-    } else if (((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I64) {
+    } else if (((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64) {
       return "new Int64(BigInt(0).toString(16))";
     } else if (
-      member_type->is_binary()
+      true_member_type->is_binary()
     ) {
       return "Buffer.from('')";
     } else {
       return "''";
     }
-  } else if (member_type->is_list()) {
-    return "[" + new_react_object(((t_list *)member_type)->get_elem_type()) + "]";
-  } else if (member_type->is_set()) {
-    return "[" + new_react_object(((t_set *)member_type)->get_elem_type()) + "]";
-  } else if (member_type->is_map()) {
-    return "{ key: " + new_react_object(((t_map *)member_type)->get_key_type()) + ", value: " + new_react_object(((t_map *)member_type)->get_val_type()) + "}";
-  } else if (member_type->is_enum()) {
+  } else if (true_member_type->is_list()) {
+    return "[" + new_react_object(((t_list *)true_member_type)->get_elem_type()) + "]";
+  } else if (true_member_type->is_set()) {
+    return "[" + new_react_object(((t_set *)true_member_type)->get_elem_type()) + "]";
+  } else if (true_member_type->is_map()) {
+    return "{ key: " + new_react_object(((t_map *)true_member_type)->get_key_type()) + ", value: " + new_react_object(((t_map *)true_member_type)->get_val_type()) + "}";
+  } else if (true_member_type->is_enum()) {
     return "''";
-  } else if (member_type->is_struct()) {
-    return "new " + find_include_2_import_name(member_type->get_program()) + "_module." + member_type->get_name() + "()";
+  } else if (true_member_type->is_struct()) {
+    return "new " + find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name() + "()";
   }
   return "null";
 }
@@ -1265,273 +1605,215 @@ string t_js_generator::new_react_object(t_type *member_type) {
 void t_js_generator::get_react_component(string member_name, string key_name, bool is_optional, bool use_setter, string parent_member, t_type *member_type, t_program *program, t_struct* tstruct) {
   indent_up();
 
-  f_react_ts_ << ts_indent() << "<Flex.Item flex='grow' key={" << key_name << "}>\n";
-  f_react_ts_ << ts_indent() << "  <Label htmlFor='" << member_name << "'>\n";
-  f_react_ts_ << ts_indent() << "    <Text>" << member_name << "</Text>\n";
-  f_react_ts_ << ts_indent() << "  </Label>\n";
+  t_type *true_member_type = member_type->is_typedef() ? ((t_typedef *)member_type)->get_true_type() : member_type;
 
   if (
-    member_type->is_base_type() &&
-    ((t_base_type *)(member_type))->get_base() != t_base_type::TYPE_VOID
+    true_member_type->is_base_type() &&
+    ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_VOID
   ) {
     if (
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_BOOL
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
     ) {
-      f_react_ts_ << ts_indent() << "  <Switch\n"
-                  << ts_indent() << "    id='" << member_name << "'\n"
-                  << ts_indent() << "    disabled={readonly}\n"
-                  << ts_indent() << "    switched={" << member_name << "}\n";
-      
+      f_react_ts_ << ts_indent() << "<ThriftInputSwitch\n"
+                  << ts_indent() << "  value={" << member_name << "}\n";
+
       if (use_setter) {
-        f_react_ts_ << ts_indent() << "    onChange={() => { set" << capitalize(member_name) << "(!" << member_name << "); }}\n";
+        f_react_ts_ << ts_indent() << "  setValue={() => { toggle" << capitalize(member_name) << "(); }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "    onChange={() => {\n"
-                     << ts_indent() << "      " << member_name << " = !" << member_name << ";\n";
-
-        if (member_type->is_list()) {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-        } else {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "({..." << parent_member << "});\n";
-        }
-
-        f_react_ts_  << ts_indent() << "    }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={() => {\n"
+                     << ts_indent() << "    " << member_name << " = !" << member_name << ";\n"
+                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "  }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  />\n";
+      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
+                  << ts_indent() << "  keyProp={" << key_name << "}\n"
+                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "/>\n";
+
     } else if (
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I8 ||
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I16 ||
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I32 ||
-      ((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_DOUBLE
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I16 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I32 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_DOUBLE
     ) {
-      f_react_ts_ << ts_indent() << "  <NumberField\n"
-                  << ts_indent() << "    id='" << member_name << "'\n"
-                  << ts_indent() << "    disabled={readonly}\n"
-                  << ts_indent() << "    placeholder='Enter a value'\n"
-                  << ts_indent() << "    value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "<ThriftInputNumberField\n"
+                  << ts_indent() << "  value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => { set" << capitalize(member_name) << "(Number(e.value)) }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(Number(value?? 0)) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => {\n"
-                     << ts_indent() << "      " << member_name << " = e.value;\n";
-
-        if (member_type->is_list()) {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-        } else {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "({..." << parent_member << "});\n";
-        }
-
-        f_react_ts_  << ts_indent() << "    }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
+                     << ts_indent() << "    " << member_name << " = Number(value?? 0);\n"
+                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "  }}\n";
       }
 
-      f_react_ts_  << ts_indent() << "  />\n";
-    } else if (((t_base_type *)(member_type))->get_base() == t_base_type::TYPE_I64) {
-      f_react_ts_ << ts_indent() << "  <TextField\n"
-                  << ts_indent() << "    id='" << member_name << "'\n"
-                  << ts_indent() << "    disabled={readonly}\n"
-                  << ts_indent() << "    placeholder='Enter a value'\n"
-                  << ts_indent() << "    value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
+                  << ts_indent() << "  keyProp={" << key_name << "}\n"
+                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "/>\n";
+
+    } else if (((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64) {
+      f_react_ts_ << ts_indent() << "<ThriftInputTextField\n"
+                  << ts_indent() << "  value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => { set" << capitalize(member_name) << "(e.value) }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => {\n"
-                << ts_indent() << "      " << member_name << " = e.value;\n";
-
-        if (member_type->is_list()) {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-        } else {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "({..." << parent_member << "});\n";
-        }
-
-        f_react_ts_  << ts_indent() << "    }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
+                     << ts_indent() << "    " << member_name << " = value;\n"
+                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "  }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  />\n";
-    } else if (member_type->is_binary()) {
-      f_react_ts_ << ts_indent() << "  <TextArea\n"
-                  << ts_indent() << "    id='" << member_name << "'\n"
-                  << ts_indent() << "    disabled={readonly}\n"
-                  << ts_indent() << "    placeholder='Enter a value'\n"
-                  << ts_indent() << "    value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
+                  << ts_indent() << "  keyProp={" << key_name << "}\n"
+                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "/>\n";
+
+    } else if (true_member_type->is_binary()) {
+      f_react_ts_ << ts_indent() << "<ThriftInputTextArea\n"
+                  << ts_indent() << "  value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => { set" << capitalize(member_name) << "(e.value) }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => {\n"
-                << ts_indent() << "      " << member_name << " = e.value;\n";
-
-        if (member_type->is_list()) {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-        } else {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "({..." << parent_member << "});\n";
-        }
-
-        f_react_ts_  << ts_indent() << "    }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
+                     << ts_indent() << "    " << member_name << " = value;\n"
+                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "  }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  />\n";
+      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
+                  << ts_indent() << "  keyProp={" << key_name << "}\n"
+                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "/>\n";
+
     } else {
-      f_react_ts_ << ts_indent() << "  <TextField\n"
-                  << ts_indent() << "    id='" << member_name << "'\n"
-                  << ts_indent() << "    disabled={readonly}\n"
-                  << ts_indent() << "    placeholder='Enter a value'\n"
-                  << ts_indent() << "    value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "<ThriftInputTextField\n"
+                  << ts_indent() << "  value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => { set" << capitalize(member_name) << "(e.value) }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "    onChange={(e) => {\n"
-                     << ts_indent() << "      " << member_name << " = e.value;\n";
-
-        if (member_type->is_list()) {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-        } else {
-          f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "({..." << parent_member << "});\n";
-        }
-
-        f_react_ts_  << ts_indent() << "    }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
+                     << ts_indent() << "    " << member_name << " = value;\n"
+                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "  }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  />\n";
+      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
+                  << ts_indent() << "  keyProp={" << key_name << "}\n"
+                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "/>\n";
+
     }
-  } else if (member_type->is_list() || member_type->is_set() || member_type->is_map()) {
-    f_react_ts_ << ts_indent() << "  <Module.Expandable\n"
-                << ts_indent() << "    id='" << member_name << "'\n"
-                << ts_indent() << "    accessibilityExpandLabel='Expand the module'\n"
-                << ts_indent() << "    accessibilityCollapseLabel='Collapse the module'\n"
-                << ts_indent() << "    items={[\n"
-                << ts_indent() << "      {\n"
-                << ts_indent() << "        title: '" << member_name << "',\n"
-                << ts_indent() << "        children: (\n"
-                << ts_indent() << "          <Box justifyContent='start' alignItems='baseline'>\n"
-                << ts_indent() << "            <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-                << ts_indent() << "              {\n"
-                << ts_indent() << "                groupByChunk(" << member_name << ")?.map((item: any, i: number) =>\n"
-                << ts_indent() << "                  {\n"
-                << ts_indent() << "                    return (\n"
-                << ts_indent() << "                      <Flex.Item flex='grow' key={i}>\n"
-                << ts_indent() << "                        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
+  } else if (true_member_type->is_list() || true_member_type->is_set() || true_member_type->is_map()) {
+    f_react_ts_ << ts_indent() << "<ThriftInputChunk\n"
+                << ts_indent() << "  add={() => {\n";
 
-    indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up();
-    get_react_chunk_component("item", "i", is_optional, false, use_setter ? member_name : parent_member, member_type, program, tstruct);
-    indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down();
+    f_react_ts_ << ts_indent() << "    " << member_name << ".push(" + new_react_object(member_type) + ");\n"
+                << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n";
 
-    f_react_ts_ << ts_indent() << "                        </Flex>\n"
-                << ts_indent() << "                      </Flex.Item>\n"
-                << ts_indent() << "                    );\n"
-                << ts_indent() << "                  }\n"
-                << ts_indent() << "                )\n"
-                << ts_indent() << "              }\n"
-                << ts_indent() << "            </Flex>\n"
-                << ts_indent() << "          </Box>\n"
-                << ts_indent() << "        ),\n"
-                << ts_indent() << "      }\n"
-                << ts_indent() << "    ]}\n"
-                << ts_indent() << "  />\n";
-  } else if (member_type->is_enum()) {
-    string enumType = find_include_2_import_name(member_type->get_program()) + "_module." + member_type->get_name();
-    f_react_ts_ << ts_indent() << "  <SelectList\n"
-                << ts_indent() << "    id='" << member_name << "'\n"
-                << ts_indent() << "    disabled={readonly}\n"
-                << ts_indent() << "    name='" << member_name << "'\n"
-                << ts_indent() << "    placeholder='Select a value from the dropdown list'\n"
-                << ts_indent() << "    value={" << member_name << "}\n";
+    f_react_ts_ << ts_indent() << "  }}\n"
+                << ts_indent() << "  list={" << member_name << "}\n"
+                << ts_indent() << "  renderChunkList={(item: any, i: number) => {\n"
+                << ts_indent() << "    const remove = (item: any) => {\n";
+
+    f_react_ts_ << ts_indent() << "      " << member_name << ".splice(" << member_name << ".indexOf(item), 1);\n"
+                << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
+
+    f_react_ts_ << ts_indent() << "    };\n"
+                << ts_indent() << "    return (\n";
+
+    indent_up(); indent_up();
+    get_react_chunk_component("item", "`item_${i}`", is_optional, false, use_setter ? member_name : parent_member, true_member_type, program, tstruct);
+    indent_down(); indent_down();
+
+    f_react_ts_ << ts_indent() << "    );\n"
+                << ts_indent() << "  }}\n"
+                << ts_indent() << "  readonly={readonly}\n"
+                << ts_indent() << "  keyProp={" << key_name << "}\n"
+                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": ChunkList'}\n"
+                << ts_indent() << "/>\n";
+
+  } else if (true_member_type->is_enum()) {
+
+    string enumType = find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name();
+    f_react_ts_ << ts_indent() << "<ThriftInputSelectList\n"
+                << ts_indent() << "  list={Object.values(" << enumType << ").filter(value => typeof value === 'string')}\n"
+                << ts_indent() << "  value={" << member_name << "}\n";
 
     if (use_setter) {
-      f_react_ts_  << ts_indent() << "    onChange={(e) => { set" << capitalize(member_name) << "(e.value); }}\n";
+      f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
     } else {
-      f_react_ts_  << ts_indent() << "    onChange={(e) => {\n"
-                   << ts_indent() << "      " << member_name << " = e.value;\n";
-
-      if (member_type->is_list()) {
-        f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-      } else {
-        f_react_ts_ << ts_indent() << "      set" << capitalize(parent_member) << "({..." << parent_member << "});\n";
-      }
-
-      f_react_ts_  << ts_indent() << "    }}\n";
+      f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
+                   << ts_indent() << "    " << member_name << " = value;\n"
+                   << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+                   << ts_indent() << "  }}\n";
     }
 
-    f_react_ts_ << ts_indent() << "  >\n"
-                << ts_indent() << "  {Object.values(" << enumType << ").filter(value => typeof value === 'string').map(value => <SelectList.Option value={value as string} label={value as string} key={value as string} />)}\n"
-                << ts_indent() << "  </SelectList>\n";
-  } else if (member_type->is_struct()) {
-    f_react_ts_ << ts_indent() << "  { (" << member_name << ") ?\n";
+    f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
+                << ts_indent() << "  keyProp={" << key_name << "}\n"
+                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                << ts_indent() << "/>\n";
 
-    if (member_type->get_program() == program) {
-      f_react_ts_ << ts_indent() << "    <" << member_type->get_name() << "Form\n";
+  } else if (true_member_type->is_struct()) {
+    f_react_ts_ << ts_indent() << "<ThriftInputStruct\n"
+                << ts_indent() << "  add={() => {\n";
+
+    if (use_setter) {
+      f_react_ts_ << ts_indent() << "    updateValueOf" << capitalize(member_name) << "(" << new_react_object(true_member_type) + ");\n";
     } else {
-      f_react_ts_ << ts_indent() << "    <" << find_include_2_import_name_react(member_type->get_program()) + "_module." + member_type->get_name() << "Form\n";
+      f_react_ts_ << ts_indent() << "    " << member_name << " = " << new_react_object(true_member_type) + ";\n"
+                  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n";
+    }
+
+    f_react_ts_ << ts_indent() << "  }}\n"
+                << ts_indent() << "  remove={() => {\n";
+
+    if (use_setter) {
+      f_react_ts_ << ts_indent() << "    updateValueOf" << capitalize(member_name) << "(undefined);\n";
+    } else {
+      f_react_ts_ << ts_indent() << "      " << member_name << " = undefined;\n"
+                  << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
+    }
+
+    f_react_ts_ << ts_indent() << "  }}\n"
+                << ts_indent() << "  value={" << member_name << "}\n"
+                << ts_indent() << "  renderStruct={() => {\n"
+                << ts_indent() << "    return (\n";
+
+    if (true_member_type->get_program() == program) {
+      f_react_ts_ << ts_indent() << "      <" << true_member_type->get_name() << "Form\n";
+    } else {
+      f_react_ts_ << ts_indent() << "      <" << find_include_2_import_name_react(true_member_type->get_program()) + "_module." + true_member_type->get_name() << "Form\n";
     }
 
     if (use_setter) {
-      f_react_ts_ << ts_indent() << "      prop" << member_type->get_name() << "={" << member_name << "}\n"
-                  << ts_indent() << "      setProp" << member_type->get_name() << "={set" << capitalize(member_name) << "}\n";
+      f_react_ts_ << ts_indent() << "        prop" << true_member_type->get_name() << "={" << member_name << "!}\n"
+                  << ts_indent() << "        setProp" << true_member_type->get_name() << "={updateValueOf" << capitalize(member_name) << "}\n";
     } else {
-      f_react_ts_ << ts_indent() << "      prop" << member_type->get_name() << "={ " << member_name << " }\n"
-                  << ts_indent() << "      setProp" << member_type->get_name() <<"={ (value: any) => {\n"
-                  << ts_indent() << "        " << member_name << " = value;\n";
+      f_react_ts_ << ts_indent() << "        prop" << true_member_type->get_name() << "={ " << member_name << "! }\n"
+                  << ts_indent() << "        setProp" << true_member_type->get_name() <<"={ (value: any) => {\n"
+                  << ts_indent() << "          " << member_name << " = value;\n";
       
-      if (member_type->is_struct()) {
-        f_react_ts_ << ts_indent() << "        set" << capitalize(parent_member) << "({..." << parent_member << "});\n"
-                    << ts_indent() << "      }}\n";
-      } else {
-        f_react_ts_ << ts_indent() << "        set" << capitalize(parent_member) << "([..." << parent_member << "]);\n"
-                    << ts_indent() << "      }}\n";
-      }
+      f_react_ts_ << ts_indent() << "          updateValueOf" << capitalize(parent_member) << "();\n"
+                  << ts_indent() << "        }}\n";
     }
 
-    f_react_ts_ << ts_indent() << "      readonly={readonly}\n"
-                << ts_indent() << "    /> :\n"
-                << ts_indent() << "    <Button\n"
-                << ts_indent() << "      disabled={readonly}\n"
-                << ts_indent() << "      text='Add " << capitalize(member_name) << "'\n"
-                << ts_indent() << "      size='sm'\n"
-                << ts_indent() << "      color='transparent'\n"
-                << ts_indent() << "      onClick={() => {\n";
+    f_react_ts_ << ts_indent() << "        readonly={readonly}\n"
+                << ts_indent() << "      />\n";
 
-    if (use_setter) {
-      f_react_ts_ << ts_indent() << "        set" << capitalize(member_name) << "(" << new_react_object(member_type) + ");\n";
-    } else {
-      f_react_ts_ << ts_indent() << "        " << member_name << " = " << new_react_object(member_type) + ";\n";
-      if (member_type->is_struct()) {
-        f_react_ts_ << ts_indent() << "        set" << capitalize(parent_member) << "({..." << parent_member + "});\n";
-      } else {
-        f_react_ts_ << ts_indent() << "        set" << capitalize(parent_member) << "([..." << parent_member + "]);\n";
-      }
-    }
 
-    f_react_ts_ << ts_indent() << "      }}\n"
-                << ts_indent() << "    />\n"
-                << ts_indent() << "  }\n";
-    
-    if (is_optional) {
-      f_react_ts_ << ts_indent() << "  <Button\n"
-                  << ts_indent() << "    disabled={readonly}\n"
-                  << ts_indent() << "    text='Remove " << capitalize(member_name) << "'\n"
-                  << ts_indent() << "    size='sm'\n"
-                  << ts_indent() << "    color='transparent'\n"
-                  << ts_indent() << "    onClick={() => {\n";
-
-      if (use_setter) {
-        f_react_ts_ << ts_indent() << "      set" << capitalize(member_name) << "(undefined);\n";
-      } else {
-        f_react_ts_ << ts_indent() << "        " << member_name << " = undefined;\n";
-        if (member_type->is_struct()) {
-          f_react_ts_ << ts_indent() << "        set" << capitalize(parent_member) << "({..." << parent_member + "});\n";
-        } else {
-          f_react_ts_ << ts_indent() << "        set" << capitalize(parent_member) << "([..." << parent_member + "]);\n";
-        }
-      }
-
-      f_react_ts_ << ts_indent() << "    }}\n"
-                  << ts_indent() << "  />\n";
-    }
+    f_react_ts_ << ts_indent() << "    )\n"
+                << ts_indent() << "  }}\n"
+                << ts_indent() << "  readonly={readonly}\n"
+                << ts_indent() << "  keyProp={" << key_name << "}\n"
+                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                << ts_indent() << "/>\n";
   }
-
-  f_react_ts_ << ts_indent() << "</Flex.Item>\n";
 
   indent_down();
 }
@@ -1539,178 +1821,52 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
 void t_js_generator::get_react_chunk_component(string member_name, string key_name, bool is_optional, bool use_setter, string parent_member, t_type *member_type, t_program *program, t_struct* tstruct) {
   indent_up();
 
-  f_react_ts_ << ts_indent() << "<Flex.Item flex='grow' key={" << key_name << "}>\n";
-  f_react_ts_ << ts_indent() << "  <Label htmlFor='" << member_name << "'>\n";
-  f_react_ts_ << ts_indent() << "    <Text>chunk {" << key_name << "} with offset {" << key_name << " * CHUNK_LENGTH} and length {" << member_name << ".length}</Text>\n";
-  f_react_ts_ << ts_indent() << "  </Label>\n";
-
   if (member_type->is_list() || member_type->is_set()) {
-    f_react_ts_ << ts_indent() << "  <Module.Expandable\n"
-                << ts_indent() << "    id='" << member_name << "'\n"
-                << ts_indent() << "    accessibilityExpandLabel='Expand the module'\n"
-                << ts_indent() << "    accessibilityCollapseLabel='Collapse the module'\n"
-                << ts_indent() << "    items={[\n"
-                << ts_indent() << "      {\n"
-                << ts_indent() << "        title: '" << member_name << "',\n"
-                << ts_indent() << "        children: (\n"
-                << ts_indent() << "          <Box justifyContent='start' alignItems='baseline'>\n"
-                << ts_indent() << "            <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-                << ts_indent() << "              {\n"
-                << ts_indent() << "                " << member_name << "?.map((item: any, i: number) =>\n"
-                << ts_indent() << "                  {\n"
-                << ts_indent() << "                    return (\n"
-                << ts_indent() << "                      <Flex.Item flex='grow' key={i}>\n"
-                << ts_indent() << "                        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
+    f_react_ts_ << ts_indent() << "<ThriftInputList\n"
+                << ts_indent() << "  remove={remove}\n"
+                << ts_indent() << "  chunk={i}\n"
+                << ts_indent() << "  list={" << member_name << "}\n"
+                << ts_indent() << "  renderListItem={(item: any, i: number) => {\n"
+                << ts_indent() << "    return (\n";
 
-    indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up();
-    get_react_component("item", "i", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_list *>(member_type)->get_elem_type(), program, tstruct);
-    indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down();
+    indent_up(); indent_up();
+    get_react_component("item", "`item_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_list *>(member_type)->get_elem_type(), program, tstruct);
+    indent_down(); indent_down();
 
-    f_react_ts_ << ts_indent() << "                          <Flex.Item flex='grow'>\n"
-                << ts_indent() << "                            <Button\n"
-                << ts_indent() << "                              disabled={readonly}\n"
-                << ts_indent() << "                              text='Remove Item'\n"
-                << ts_indent() << "                              size='sm'\n"
-                << ts_indent() << "                              color='transparent'\n"
-                << ts_indent() << "                              onClick={() => {\n";
-
-    if (use_setter) {
-      f_react_ts_  << ts_indent() << "                                set" << capitalize(member_name) << "([..." << member_name << ".filter((it: any) => it !== i)]);\n";
-    } else {
-      f_react_ts_  << ts_indent() << "                                " << member_name << " = " << member_name << ".filter((it: any) => it !== i);\n"
-                    << ts_indent() << "                                set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-    }
-
-    f_react_ts_ << ts_indent() << "                               }}\n"
-                << ts_indent() << "                            />\n"
-                << ts_indent() << "                          </Flex.Item>\n";
-
-    f_react_ts_ << ts_indent() << "                        </Flex>\n"
-                << ts_indent() << "                      </Flex.Item>\n"
-                << ts_indent() << "                    );\n"
-                << ts_indent() << "                  }\n"
-                << ts_indent() << "                )\n"
-                << ts_indent() << "              }\n"
-                << ts_indent() << "              <Flex.Item flex='grow'>\n"
-                << ts_indent() << "                <Button\n"
-                << ts_indent() << "                  disabled={readonly}\n"
-                << ts_indent() << "                  text='Add Item'\n"
-                << ts_indent() << "                  size='sm'\n"
-                << ts_indent() << "                  color='transparent'\n"
-                << ts_indent() << "                  onClick={() => {\n";
-
-    if (use_setter) {
-      f_react_ts_  << ts_indent() << "                    set" << capitalize(member_name) << "([..." << member_name << ", " + new_react_object(member_type) + "]);\n";
-    } else {
-      f_react_ts_  << ts_indent() << "                    " << member_name << ".push(" + new_react_object(member_type) + ");\n"
-                    << ts_indent() << "                    set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-    }
-
-    f_react_ts_ << ts_indent() << "                  }}\n"
-                << ts_indent() << "                />\n"
-                << ts_indent() << "              </Flex.Item>\n"
-                << ts_indent() << "            </Flex>\n"
-                << ts_indent() << "          </Box>\n"
-                << ts_indent() << "        ),\n"
-                << ts_indent() << "      }\n"
-                << ts_indent() << "    ]}\n"
-                << ts_indent() << "  />\n";
+    f_react_ts_ << ts_indent() << "    );\n"
+                << ts_indent() << "  }}\n"
+                << ts_indent() << "  readonly={readonly}\n"
+                << ts_indent() << "  keyProp={" << key_name << "}\n"
+                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": List'}\n"
+                << ts_indent() << "/>\n";
   } else if (member_type->is_map()) {
-    f_react_ts_ << ts_indent() << "  <Module.Expandable\n"
-                << ts_indent() << "    id='" << member_name << "'\n"
-                << ts_indent() << "    accessibilityExpandLabel='Expand the module'\n"
-                << ts_indent() << "    accessibilityCollapseLabel='Collapse the module'\n"
-                << ts_indent() << "    items={[\n"
-                << ts_indent() << "      {\n"
-                << ts_indent() << "        title: '" << member_name << "',\n"
-                << ts_indent() << "        children: (\n"
-                << ts_indent() << "          <Box justifyContent='start' alignItems='baseline'>\n"
-                << ts_indent() << "            <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-                << ts_indent() << "              {\n"
-                << ts_indent() << "                " << member_name << "?.map((item: any, i: number) => {\n"
-                << ts_indent() << "                  return (\n"
-                << ts_indent() << "                    <Flex.Item flex='grow' key={i}>\n"
-                << ts_indent() << "                      <Box justifyContent='start' alignItems='baseline'>\n"
-                << ts_indent() << "                        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-                << ts_indent() << "                          <Flex.Item flex='grow'>\n"
-                << ts_indent() << "                            <Label htmlFor='" << member_name << "_key[{i}]'>\n"
-                << ts_indent() << "                              <Text>" << member_name << "_key[{i}]</Text>\n"
-                << ts_indent() << "                            </Label>\n"
-                << ts_indent() << "                            <Box justifyContent='start' alignItems='baseline'>\n"
-                << ts_indent() << "                              <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
+    f_react_ts_ << ts_indent() << "<ThriftInputMap\n"
+                << ts_indent() << "  remove={remove}\n"
+                << ts_indent() << "  chunk={i}\n"
+                << ts_indent() << "  list={" << member_name << "}\n"
+                << ts_indent() << "  renderMapKey={(item: any, i: number) => {\n"
+                << ts_indent() << "    return (\n";
 
-    indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up();
-    get_react_component("item.key", "i", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_key_type(), program, tstruct);
-    indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down();
+    indent_up(); indent_up();
+    get_react_component ("item.key", "`item_key_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_key_type(), program, tstruct);
+    indent_down(); indent_down();
 
-    f_react_ts_ << ts_indent() << "                              </Flex>\n"
-                << ts_indent() << "                            </Box>\n"
-                << ts_indent() << "                          </Flex.Item>\n"
-                << ts_indent() << "                          <Flex.Item flex='grow'>\n"
-                << ts_indent() << "                            <Label htmlFor='" << member_name << "_value[{i}]'>\n"
-                << ts_indent() << "                              <Text>" << member_name << "_value[{i}]</Text>\n"
-                << ts_indent() << "                            </Label>\n"
-                << ts_indent() << "                            <Box justifyContent='start' alignItems='baseline'>\n"
-                << ts_indent() << "                              <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
+    f_react_ts_ << ts_indent() << "    );\n"
+                << ts_indent() << "  }}\n"
+                << ts_indent() << "  renderMapValue={(item: any, i: number) => {\n"
+                << ts_indent() << "    return (\n";
 
-    indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up(); indent_up();
-    get_react_component("item.value", "i", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_val_type(), program, tstruct);
-    indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down(); indent_down();
+    indent_up(); indent_up();
+    get_react_component("item.value", "`item_value_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_val_type(), program, tstruct);
+    indent_down(); indent_down();
 
-    f_react_ts_ << ts_indent() << "                              </Flex>\n"
-                << ts_indent() << "                            </Box>\n"
-                << ts_indent() << "                          </Flex.Item>\n"
-                << ts_indent() << "                          <Flex.Item flex='grow'>\n"
-                << ts_indent() << "                            <Button\n"
-                << ts_indent() << "                              disabled={readonly}\n"
-                << ts_indent() << "                              text='Remove Item'\n"
-                << ts_indent() << "                              size='sm'\n"
-                << ts_indent() << "                              color='transparent'\n"
-                << ts_indent() << "                              onClick={() => {\n";
-
-    if (use_setter) {
-      f_react_ts_  << ts_indent() << "                                set" << capitalize(member_name) << "([..." << member_name << ".filter((it: any) => it !== i)]);\n";
-    } else {
-      f_react_ts_  << ts_indent() << "                                " << member_name << " = " << member_name << ".filter((it: any) => it !== i);\n"
-                   << ts_indent() << "                                set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-    }
-
-    f_react_ts_ << ts_indent() << "                              }}\n"
-                << ts_indent() << "                            />\n"
-                << ts_indent() << "                          </Flex.Item>\n"
-                << ts_indent() << "                        </Flex>\n"
-                << ts_indent() << "                      </Box>\n"
-                << ts_indent() << "                    </Flex.Item>\n"
-                << ts_indent() << "                  );\n"
-                << ts_indent() << "                })\n"
-                << ts_indent() << "              }\n"
-                << ts_indent() << "              <Flex.Item flex='grow'>\n"
-                << ts_indent() << "                <Button\n"
-                << ts_indent() << "                  disabled={readonly}\n"
-                << ts_indent() << "                  text='Add Item'\n"
-                << ts_indent() << "                  size='sm'\n"
-                << ts_indent() << "                  color='transparent'\n"
-                << ts_indent() << "                  onClick={() => {\n";
-
-    if (use_setter) {
-      f_react_ts_  << ts_indent() << "                    set" << capitalize(member_name) << "([..." << member_name << ", " + new_react_object(member_type) + "]);\n";
-    } else {
-      f_react_ts_  << ts_indent() << "                    " << member_name << ".push(" + new_react_object(member_type) + ");\n"
-                   << ts_indent() << "                    set" << capitalize(parent_member) << "([..." << parent_member << "]);\n";
-    }
-
-    f_react_ts_ << ts_indent() << "                  }}\n"
-                << ts_indent() << "                />\n"
-                << ts_indent() << "              </Flex.Item>\n";
-    f_react_ts_ << ts_indent() << "            </Flex>\n"
-                << ts_indent() << "          </Box>\n"
-                << ts_indent() << "        ),\n"
-                << ts_indent() << "      }\n"
-                << ts_indent() << "    ]}\n"
-                << ts_indent() << "  />\n";
+    f_react_ts_ << ts_indent() << "    );\n"
+                << ts_indent() << "  }}\n"
+                << ts_indent() << "  readonly={readonly}\n"
+                << ts_indent() << "  keyProp={" << key_name << "}\n"
+                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": Map'}\n"
+                << ts_indent() << "/>\n";
   }
-
-  f_react_ts_ << ts_indent() << "</Flex.Item>\n";
 
   indent_down();
 }
@@ -1849,19 +2005,25 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
     if (should_enable_react) {
       get_react_initial_use_effect(tstruct);
 
-      f_react_ts_ << ts_indent() << "return(<>\n";
+      f_react_ts_ << ts_indent() << "return (<>\n";
       indent_up();
+
+      f_react_ts_ << ts_indent() << "<Box justifyContent='start' alignItems='baseline' padding={4}>\n"
+                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
+
+      indent_up();
+
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         string member_name = (*m_iter)->get_name();
         t_type *member_type = (*m_iter)->get_type();
-        f_react_ts_ << ts_indent() << "<Box justifyContent='start' alignItems='baseline'>\n"
-                    << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
-        indent_up();
         get_react_component(member_name, "'key'", (*m_iter)->get_req() == t_field::e_req::T_OPTIONAL, true, member_name, member_type, tstruct->get_program(), tstruct);
-        indent_down();
-        f_react_ts_ << ts_indent() << "  </Flex>\n"
-                    << ts_indent() << "</Box>\n";
       }
+
+      indent_down();
+
+      f_react_ts_ << ts_indent() << "  </Flex>\n"
+                  << ts_indent() << "</Box>\n";
+
       indent_down();
       f_react_ts_ << ts_indent() << "</>)\n";
     }
