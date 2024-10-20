@@ -672,7 +672,7 @@ string t_js_generator::render_react_includes() {
     "import Thrift = thrift.Thrift;\n"
     "import Q = thrift.Q;\n"
     "import Int64 from 'node-int64';\n"
-    "import React, {useEffect, useState, useCallback} from 'react';\n"
+    "import React, {Suspense, useEffect, useState, useCallback, lazy} from 'react';\n"
     "import { Box, Label, SelectList, Text, Switch, Flex, Button, TextField, TextArea, Module, NumberField } from 'gestalt';\n"
   );
 
@@ -690,7 +690,6 @@ string t_js_generator::render_react_includes() {
 
     string include_name_react = make_valid_nodeJs_identifier(include->get_name()) + "_react";
     include_2_import_name_react.insert({include, include_name_react});
-    result += "import * as " + include_name_react + "_module from './" + (include->get_name() + "_react") + "';\n";
   }
   if (includes.size() > 0) {
     result += "\n";
@@ -1089,10 +1088,6 @@ void t_js_generator::generate_enum(t_enum* tenum) {
   if (gen_ts_) {
     f_types_ts_ << ts_print_doc(tenum) << ts_indent() << ts_declare() << "enum "
                 << tenum->get_name() << " {" << '\n';
-
-    // (tmarquesdonascimento) enable react form rendering
-    f_react_ts_ << ts_print_doc(tenum) << ts_indent() << ts_export() << ts_type() << tenum->get_name()
-                << "Type = \n";
   }
 
   indent_up();
@@ -1103,10 +1098,6 @@ void t_js_generator::generate_enum(t_enum* tenum) {
     int value = (*c_iter)->get_value();
     if (gen_ts_) {
       f_types_ts_ << ts_indent() << (*c_iter)->get_name() << " = " << value << "," << '\n';
-
-      // (tmarquesdonascimento) enable react form rendering
-      bool is_last = (c_iter + 1) == constants.end();
-      f_react_ts_ << ts_indent() << "'" << (*c_iter)->get_name() << (!is_last ? "' | " : "';") << '\n';
 
       // add 'value: key' in addition to 'key: value' for TypeScript enums
       f_types_ << indent() << "'" << value << "' : '" << (*c_iter)->get_name() << "'," << '\n';
@@ -1124,8 +1115,29 @@ void t_js_generator::generate_enum(t_enum* tenum) {
 
   if (gen_ts_) {
     f_types_ts_ << ts_indent() << "}" << '\n';
-    // (tmarquesdonascimento) enable react form rendering
-    f_react_ts_ << ts_indent() << '\n';
+  }
+
+  /*
+   * (tmarquesdonascimento) enable react form rendering
+   */
+  if (gen_ts_) {
+    f_types_ts_ << ts_print_doc(tenum) << ts_indent() << ts_export() << ts_type() << tenum->get_name()
+                << "Type = \n";
+  }
+
+  indent_up();
+
+  for (c_iter = constants.begin(); c_iter != constants.end(); ++c_iter) {
+    if (gen_ts_) {
+      bool is_last = (c_iter + 1) == constants.end();
+      f_types_ts_ << ts_indent() << "'" << (*c_iter)->get_name() << (!is_last ? "' | " : "';") << '\n';
+    }
+  }
+
+  indent_down();
+
+  if (gen_ts_) {
+    f_types_ts_ << ts_indent() << '\n';
   }
 }
 
@@ -1488,13 +1500,8 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
-      if (true_member_type->get_program() == tstruct->get_program()) {
-        f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[" << member_name << " as " << true_member_type->get_name() << "Type];\n";
-      } else {
-        f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[" << member_name << " as " << find_include_2_import_name_react(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "Type];\n";
-      }
+      f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
+                  << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[" << member_name << " as " << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "Type];\n";
 
       indent_down();
 
@@ -1782,32 +1789,43 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
 
     f_react_ts_ << ts_indent() << "  }}\n"
                 << ts_indent() << "  value={" << member_name << "}\n"
-                << ts_indent() << "  renderStruct={() => {\n"
-                << ts_indent() << "    return (\n";
+                << ts_indent() << "  renderStruct={() => {\n";
+
+    if (true_member_type->get_program() != program) {
+      f_react_ts_ << ts_indent() << "    const " << true_member_type->get_name() << "Form = lazy(() => import('./" + (true_member_type->get_program()->get_name() + "_react") + "').then(module => { return { default: module." << true_member_type->get_name() << "Form } }));\n";
+    }
 
     if (true_member_type->get_program() == program) {
-      f_react_ts_ << ts_indent() << "      <" << true_member_type->get_name() << "Form\n";
+      f_react_ts_ << ts_indent() << "    return (\n"
+                  << ts_indent() << "      <" << true_member_type->get_name() << "Form\n";
+      indent_down();
     } else {
-      f_react_ts_ << ts_indent() << "      <" << find_include_2_import_name_react(true_member_type->get_program()) + "_module." + true_member_type->get_name() << "Form\n";
+      f_react_ts_ << ts_indent() << "    return (\n"
+                  << ts_indent() << "      <Suspense fallback={<Text>Loading Struct...</Text>}>\n"
+                  << ts_indent() << "        <" << true_member_type->get_name() << "Form\n";
     }
 
     if (use_setter) {
-      f_react_ts_ << ts_indent() << "        prop" << true_member_type->get_name() << "={" << member_name << "!}\n"
-                  << ts_indent() << "        setProp" << true_member_type->get_name() << "={updateValueOf" << capitalize(member_name) << "}\n";
+      f_react_ts_ << ts_indent() << "          prop" << true_member_type->get_name() << "={" << member_name << "!}\n"
+                  << ts_indent() << "          setProp" << true_member_type->get_name() << "={updateValueOf" << capitalize(member_name) << "}\n";
     } else {
-      f_react_ts_ << ts_indent() << "        prop" << true_member_type->get_name() << "={ " << member_name << "! }\n"
-                  << ts_indent() << "        setProp" << true_member_type->get_name() <<"={ (value: any) => {\n"
-                  << ts_indent() << "          " << member_name << " = value;\n";
+      f_react_ts_ << ts_indent() << "          prop" << true_member_type->get_name() << "={ " << member_name << "! }\n"
+                  << ts_indent() << "          setProp" << true_member_type->get_name() <<"={ (value: any) => {\n"
+                  << ts_indent() << "            " << member_name << " = value;\n";
       
-      f_react_ts_ << ts_indent() << "          updateValueOf" << capitalize(parent_member) << "();\n"
-                  << ts_indent() << "        }}\n";
+      f_react_ts_ << ts_indent() << "            updateValueOf" << capitalize(parent_member) << "();\n"
+                  << ts_indent() << "          }}\n";
     }
 
-    f_react_ts_ << ts_indent() << "        readonly={readonly}\n"
-                << ts_indent() << "      />\n";
+    f_react_ts_ << ts_indent() << "          readonly={readonly}\n"
+                << ts_indent() << "        />\n";
 
-
-    f_react_ts_ << ts_indent() << "    )\n"
+    if (true_member_type->get_program() == program) {
+      indent_up();
+    } else {
+      f_react_ts_ << ts_indent() << "      </Suspense>\n";
+    }
+    f_react_ts_ << ts_indent() << "    );\n"
                 << ts_indent() << "  }}\n"
                 << ts_indent() << "  readonly={readonly}\n"
                 << ts_indent() << "  keyProp={" << key_name << "}\n"
