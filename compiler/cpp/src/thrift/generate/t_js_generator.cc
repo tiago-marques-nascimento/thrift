@@ -674,7 +674,7 @@ string t_js_generator::render_react_includes() {
     "import Q = thrift.Q;\n"
     "import Int64 from 'node-int64';\n"
     "import React, {Suspense, useEffect, useState, useCallback, lazy} from 'react';\n"
-    "import { Box, Label, SelectList, Text, Switch, Flex, Button, TextField, TextArea, Module, NumberField } from 'gestalt';\n"
+    "import { Box, Label, SelectList, Text, Link, Switch, Flex, Button, TextField, TextArea, Module, NumberField } from 'gestalt';\n"
   );
 
   if (!gen_node_) {
@@ -1403,7 +1403,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
     ) {
       if (((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64) {
         
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>('');\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " ? BigInt('0x' + (prop" << tstruct->get_name() << "." << member_name << ").toOctetString()).toString() : '');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1423,7 +1423,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
         ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8
       ) {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(0);\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << member_name << " ?? 0);\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1439,7 +1439,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
         ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
       ) {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<boolean>(false);\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<boolean>(prop" << tstruct->get_name() << "." << member_name << " ?? false);\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1453,7 +1453,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
         f_react_ts_ << ts_indent() << "const toggle" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "(!" << member_name << ") };\n\n";
       } else if (true_member_type->is_binary()) {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>('');\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << "?.toString('hex') ?? '');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1467,7 +1467,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
         f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
       } else {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>('');\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " ?? '');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
@@ -1482,7 +1482,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       }
     } else if (true_member_type->is_list() || true_member_type->is_set() || true_member_type->is_map()) {
 
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<any[]>([]);\n";
+      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<any[]>(prop" << tstruct->get_name() << "." << member_name << " ?? []);\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
@@ -1497,7 +1497,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "([..." << member_name << "]) };\n\n";
     } else if (true_member_type->is_enum()) {
 
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(Object.values(" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << ")[0] as string);\n";
+      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " ? " << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[prop" << tstruct->get_name() << "." << member_name << "] : Object.values(" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << ")[0] as string);\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
@@ -1509,7 +1509,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
       f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
     } else if (true_member_type->is_struct()) {
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << ">();\n";
+      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << " | undefined>(prop" << tstruct->get_name() << "." << member_name << ");\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
@@ -1630,7 +1630,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={() => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", !" << member_name << ")";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", !" << member_name << ");\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = !" << member_name << ";\n";
         }
@@ -1657,7 +1657,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", Number(value?? 0))";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", Number(value?? 0));\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = Number(value?? 0);\n";
         }
@@ -1679,7 +1679,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
@@ -1701,7 +1701,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
@@ -1723,7 +1723,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
@@ -1784,7 +1784,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     } else {
       f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
       if (is_replaceable) {
-        f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+        f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
       } else {
         f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
       }
@@ -2058,7 +2058,10 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
       indent_up();
 
       f_react_ts_ << ts_indent() << "<Box justifyContent='start' alignItems='baseline' padding={4}>\n"
-                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
+                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+                  << ts_indent() << "    <Flex.Item flex='grow' alignSelf='end'>\n"
+                  << ts_indent() << "      <Text size={'100'}><Link accessibilityLabel='View on sourcegraph' externalLinkIcon='default' href={`https://sourcegraph.pinadmin.com/github.com/pinternal/thrift-schemas/-/blob/${'" << tstruct->get_program()->get_path() << "'.replace('/usr/home/thrift-schemas/', '')}`} target='blank'>View " << tstruct->get_name() << " in sourcegraph</Link></Text>\n"
+                  << ts_indent() << "    </Flex.Item>\n";
 
       indent_up();
 
