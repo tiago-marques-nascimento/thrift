@@ -674,7 +674,7 @@ string t_js_generator::render_react_includes() {
     "import Q = thrift.Q;\n"
     "import Int64 from 'node-int64';\n"
     "import React, {Suspense, useEffect, useState, useCallback, lazy} from 'react';\n"
-    "import { Box, Label, SelectList, Text, Switch, Flex, Button, TextField, TextArea, Module, NumberField } from 'gestalt';\n"
+    "import { Box, Label, SelectList, Text, Link, Switch, Flex, Button, TextField, TextArea, Module, NumberField } from 'gestalt';\n"
   );
 
   if (!gen_node_) {
@@ -1630,7 +1630,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={() => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", !" << member_name << ")";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", !" << member_name << ");\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = !" << member_name << ";\n";
         }
@@ -1657,7 +1657,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", Number(value?? 0))";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", Number(value?? 0));\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = Number(value?? 0);\n";
         }
@@ -1679,7 +1679,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
@@ -1701,7 +1701,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
@@ -1723,7 +1723,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
           f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
@@ -1784,7 +1784,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     } else {
       f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
       if (is_replaceable) {
-        f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+        f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
       } else {
         f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
       }
@@ -2058,7 +2058,10 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
       indent_up();
 
       f_react_ts_ << ts_indent() << "<Box justifyContent='start' alignItems='baseline' padding={4}>\n"
-                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n";
+                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+                  << ts_indent() << "    <Flex.Item flex='grow' alignSelf='end'>\n"
+                  << ts_indent() << "      <Text size={'100'}><Link accessibilityLabel='View on sourcegraph' externalLinkIcon='default' href={`https://sourcegraph.pinadmin.com/github.com/pinternal/thrift-schemas/-/blob/${'" << tstruct->get_program()->get_path() << "'.replace('/usr/home/thrift-schemas/', '')}`} target='blank'>View " << tstruct->get_name() << " in sourcegraph</Link></Text>\n"
+                  << ts_indent() << "    </Flex.Item>\n";
 
       indent_up();
 
