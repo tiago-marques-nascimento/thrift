@@ -254,7 +254,8 @@ public:
     string parent_member,
     t_type *member_type, // it can be the member_name type or the parent_member type, if use_setter is set to false
     t_program *program,
-    t_struct* tstruct
+    t_struct* tstruct,
+    bool is_replaceable // if set to true, it means that there is a replace method to be called upon component state change, use_setter must also be false for this toggle to take effect
   );
   void get_react_chunk_component(
     string member_name,
@@ -1609,7 +1610,7 @@ string t_js_generator::new_react_object(t_type *member_type) {
 }
 
 // (tmarquesdonascimento): method to get the react component.
-void t_js_generator::get_react_component(string member_name, string key_name, bool is_optional, bool use_setter, string parent_member, t_type *member_type, t_program *program, t_struct* tstruct) {
+void t_js_generator::get_react_component(string member_name, string key_name, bool is_optional, bool use_setter, string parent_member, t_type *member_type, t_program *program, t_struct* tstruct, bool is_replaceable) {
   indent_up();
 
   t_type *true_member_type = member_type->is_typedef() ? ((t_typedef *)member_type)->get_true_type() : member_type;
@@ -1627,9 +1628,13 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       if (use_setter) {
         f_react_ts_ << ts_indent() << "  setValue={() => { toggle" << capitalize(member_name) << "(); }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={() => {\n"
-                     << ts_indent() << "    " << member_name << " = !" << member_name << ";\n"
-                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+        f_react_ts_  << ts_indent() << "  setValue={() => {\n";
+        if (is_replaceable) {
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", !" << member_name << ")";
+        } else {
+          f_react_ts_  << ts_indent() << "    " << member_name << " = !" << member_name << ";\n";
+        }
+        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                      << ts_indent() << "  }}\n";
       }
 
@@ -1650,9 +1655,13 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       if (use_setter) {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(Number(value?? 0)) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
-                     << ts_indent() << "    " << member_name << " = Number(value?? 0);\n"
-                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        if (is_replaceable) {
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", Number(value?? 0))";
+        } else {
+          f_react_ts_  << ts_indent() << "    " << member_name << " = Number(value?? 0);\n";
+        }
+        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                      << ts_indent() << "  }}\n";
       }
 
@@ -1668,9 +1677,13 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       if (use_setter) {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
-                     << ts_indent() << "    " << member_name << " = value;\n"
-                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        if (is_replaceable) {
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+        } else {
+          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+        }
+        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                      << ts_indent() << "  }}\n";
       }
 
@@ -1686,9 +1699,13 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       if (use_setter) {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
-                     << ts_indent() << "    " << member_name << " = value;\n"
-                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        if (is_replaceable) {
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+        } else {
+          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+        }
+        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                      << ts_indent() << "  }}\n";
       }
 
@@ -1704,9 +1721,13 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       if (use_setter) {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
-                     << ts_indent() << "    " << member_name << " = value;\n"
-                     << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        if (is_replaceable) {
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+        } else {
+          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+        }
+        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                      << ts_indent() << "  }}\n";
       }
 
@@ -1725,10 +1746,16 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
 
     f_react_ts_ << ts_indent() << "  }}\n"
                 << ts_indent() << "  list={" << member_name << "}\n"
-                << ts_indent() << "  renderChunkList={(item: any, i: number) => {\n"
-                << ts_indent() << "    const remove = (item: any) => {\n";
+                << ts_indent() << "  renderChunkList={(item: any, i: number) => {\n";
 
-    f_react_ts_ << ts_indent() << "      " << member_name << ".splice(" << member_name << ".indexOf(item), 1);\n"
+    if (true_member_type->is_list() || true_member_type->is_set()) {
+      f_react_ts_ << ts_indent() << "    const replace = (oldItem: any, newItem: any) => {\n"
+                  << ts_indent() << "      " << member_name << "[" << member_name << ".indexOf(oldItem)] = newItem\n"
+                  << ts_indent() << "    };\n";
+    }
+
+    f_react_ts_ << ts_indent() << "    const remove = (item: any) => {\n"
+                << ts_indent() << "      " << member_name << ".splice(" << member_name << ".indexOf(item), 1);\n"
                 << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
 
     f_react_ts_ << ts_indent() << "    };\n"
@@ -1755,9 +1782,13 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     if (use_setter) {
       f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
     } else {
-      f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n"
-                   << ts_indent() << "    " << member_name << " = value;\n"
-                   << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
+      f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+      if (is_replaceable) {
+        f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value)";
+      } else {
+        f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+      }
+      f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                    << ts_indent() << "  }}\n";
     }
 
@@ -1848,7 +1879,7 @@ void t_js_generator::get_react_chunk_component(string member_name, string key_na
                 << ts_indent() << "    return (\n";
 
     indent_up(); indent_up();
-    get_react_component("item", "`item_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_list *>(member_type)->get_elem_type(), program, tstruct);
+    get_react_component("item", "`item_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_list *>(member_type)->get_elem_type(), program, tstruct, true);
     indent_down(); indent_down();
 
     f_react_ts_ << ts_indent() << "    );\n"
@@ -1866,7 +1897,7 @@ void t_js_generator::get_react_chunk_component(string member_name, string key_na
                 << ts_indent() << "    return (\n";
 
     indent_up(); indent_up();
-    get_react_component ("item.key", "`item_key_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_key_type(), program, tstruct);
+    get_react_component("item.key", "`item_key_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_key_type(), program, tstruct, false);
     indent_down(); indent_down();
 
     f_react_ts_ << ts_indent() << "    );\n"
@@ -1875,7 +1906,7 @@ void t_js_generator::get_react_chunk_component(string member_name, string key_na
                 << ts_indent() << "    return (\n";
 
     indent_up(); indent_up();
-    get_react_component("item.value", "`item_value_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_val_type(), program, tstruct);
+    get_react_component("item.value", "`item_value_${i}`", is_optional, false, use_setter ? member_name : parent_member, static_cast<t_map *>(member_type)->get_val_type(), program, tstruct, false);
     indent_down(); indent_down();
 
     f_react_ts_ << ts_indent() << "    );\n"
@@ -2034,7 +2065,7 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
       for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
         string member_name = (*m_iter)->get_name();
         t_type *member_type = (*m_iter)->get_type();
-        get_react_component(member_name, "'key'", (*m_iter)->get_req() == t_field::e_req::T_OPTIONAL, true, member_name, member_type, tstruct->get_program(), tstruct);
+        get_react_component(member_name, "'key'", (*m_iter)->get_req() == t_field::e_req::T_OPTIONAL, true, member_name, member_type, tstruct->get_program(), tstruct, false);
       }
 
       indent_down();
