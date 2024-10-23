@@ -719,26 +719,35 @@ string t_js_generator::render_react_consts() {
     "    return chunks;\n"
     "}\n"
 
-    "type ThriftInputProps = { value: any, setValue: Function, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftInputProps = { value: any, setValue: Function, nullable?: boolean, readonly: boolean, keyProp: string, label: string };\n"
     "type ThriftSelectListInputProps = { list: any[], value: any, setValue: Function, readonly: boolean, keyProp: string, label: string };\n"
     "type ThriftStructInputProps = { add: Function, remove?: Function, renderStruct: Function, value: any, readonly: boolean, keyProp: string, label: string };\n"
     "type ThriftChunkInputProps = { add: Function, list: any[], renderChunkList: Function, readonly: boolean, keyProp: string, label: string };\n"
     "type ThriftListInputProps = { remove: Function, chunk: number, list: any[], renderListItem: any, readonly: boolean, keyProp: string, label: string };\n"
     "type ThriftMapInputProps = { remove: Function, chunk: number, list: any[], renderMapKey: any, renderMapValue: any, readonly: boolean, keyProp: string, label: string };\n"
 
-    "const ThriftInputSwitch = ({ value, setValue, readonly, keyProp, label }: ThriftInputProps) => {\n"
-    "  const setValueCallback = useCallback(() => { setValue(); }, [setValue]);\n"
+    "type ThriftInputBooleanType = 'false'|'true'|'null';\n"
+    "const booleanToThriftInputBooleanType = (value: boolean | undefined): ThriftInputBooleanType => (value != null) ? (value === true ? 'true' : 'false') : 'null';\n"
+    "const thriftInputBooleanTypeToBoolean = (value: ThriftInputBooleanType): boolean | undefined => (value !== 'null') ? (value === 'true' ? true : false) : undefined;\n"
+    "const ThriftInputBoolean = ({ value, setValue, nullable, readonly, keyProp, label }: ThriftInputProps) => {\n"
+    "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
     "      <Label htmlFor={label}>\n"
     "        <Text>{label}</Text>\n"
     "      </Label>\n"
-    "      <Switch\n"
+    "      <SelectList\n"
     "        id={label}\n"
     "        disabled={readonly}\n"
-    "        switched={value}\n"
-    "        onChange={() => setValueCallback() }\n"
-    "      />\n"
+    "        name={label}\n"
+    "        placeholder='Select a value from the dropdown list'\n"
+    "        value={value}\n"
+    "        onChange={(e) => setValueCallback(e.value) }\n"
+    "      >\n"
+    "      { nullable && <SelectList.Option value='null' label='null' key='null' /> }\n"
+    "      <SelectList.Option value='false' label='false' key='false' />\n"
+    "      <SelectList.Option value='true' label='true' key='true' />\n"
+    "      </SelectList>\n"
     "    </Flex.Item>\n"
     "  );\n"
     "}\n"
@@ -750,12 +759,12 @@ string t_js_generator::render_react_consts() {
     "      <Label htmlFor={label}>\n"
     "        <Text>{label}</Text>\n"
     "      </Label>\n"
-    "      <NumberField\n"
+    "      <TextField\n"
     "        id={label}\n"
     "        disabled={readonly}\n"
     "        placeholder='Enter a value'\n"
     "        value={value}\n"
-    "        onChange={(e) => setValueCallback(e.value) }\n"
+    "        onChange={(e) => setValueCallback( isNaN(Number(e.value)) ? '0' : e.value ) }\n"
     "      />\n"
     "    </Flex.Item>\n"
     "  );\n"
@@ -798,7 +807,7 @@ string t_js_generator::render_react_consts() {
     "}\n"
 
     "const ThriftInputSelectList = ({ list, value, setValue, readonly, keyProp, label }: ThriftSelectListInputProps) => {\n"
-    "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
+    "  const setValueCallback = useCallback((value: number) => { setValue(value); }, [setValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
     "      <Label htmlFor={label}>\n"
@@ -809,10 +818,10 @@ string t_js_generator::render_react_consts() {
     "        disabled={readonly}\n"
     "        name={label}\n"
     "        placeholder='Select a value from the dropdown list'\n"
-    "        value={value}\n"
-    "        onChange={(e) => setValueCallback(e.value) }\n"
+    "        value={`val${value}`}\n"
+    "        onChange={(e) => setValueCallback(Number(e.value.substring(3))) }\n"
     "      >\n"
-    "      {list.map(value => <SelectList.Option value={value as string} label={value as string} key={value as string} />)}\n"
+    "      {list.map(item => <SelectList.Option value={`val${item.key}`} label={item.value as string} key={item.value as string} />)}\n"
     "      </SelectList>\n"
     "    </Flex.Item>\n"
     "  );\n"
@@ -921,7 +930,7 @@ string t_js_generator::render_react_consts() {
     "        accessibilityCollapseLabel='Collapse the module'\n"
     "        items={[\n"
     "          {\n"
-    "            title: `label Chunk[${chunk}]`,\n"
+    "            title: `Chunk[${chunk}]`,\n"
     "            children: (\n"
     "              <Box justifyContent='start' alignItems='baseline'>\n"
     "                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
@@ -1403,14 +1412,18 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
     ) {
       if (((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64) {
         
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " ? BigInt('0x' + (prop" << tstruct->get_name() << "." << member_name << ").toOctetString()).toString() : '');\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " != null ? BigInt('0x' + (prop" << tstruct->get_name() << "." << member_name << ").toOctetString()).toString() : '');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
         f_react_ts_ << ts_indent() << null_check
                     << "prop" << tstruct->get_name() << "." << member_name << " = ";
-                    
-        f_react_ts_ << "new Int64(BigInt(" << member_name << "?? '0').toString(16));\n";
+
+        if (is_optional) {
+          f_react_ts_ << member_name << " ? new Int64(BigInt(" << member_name << ").toString(16)) : undefined;\n";
+        } else {
+          f_react_ts_ << "new Int64(BigInt(" << member_name << "?? '0').toString(16));\n";
+        }
 
         indent_down();
 
@@ -1423,43 +1436,58 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
         ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8
       ) {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << member_name << " ?? 0);\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " != null ? `${prop" << tstruct->get_name() << "." << member_name << "}` : '');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
         f_react_ts_ << ts_indent() << null_check
-                    << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << "Number(" << member_name << ");\n";
+                    << "prop" << tstruct->get_name() << "." << member_name << " = ";
+
+        if (is_optional) {
+          f_react_ts_ << member_name << " ? Number(" << member_name << ") : undefined;\n";
+        } else {
+          f_react_ts_ << "Number(" << member_name << ");\n";
+        }
 
         indent_down();
 
         f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
-        f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: number) => { set" << capitalize(member_name) << "(value) };\n\n";
+        f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
       } else if (
         ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
       ) {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<boolean>(prop" << tstruct->get_name() << "." << member_name << " ?? false);\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<ThriftInputBooleanType>(booleanToThriftInputBooleanType(prop" << tstruct->get_name() << "." << member_name << "));\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
         f_react_ts_ << ts_indent() <<  null_check
-                    << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << member_name << " as boolean;\n";
+                    << "prop" << tstruct->get_name() << "." << member_name << " = ";
+
+        if (is_optional) {
+          f_react_ts_ << "thriftInputBooleanTypeToBoolean(" << member_name << ");\n";
+        } else {
+          f_react_ts_ << "thriftInputBooleanTypeToBoolean(" << member_name << ") as boolean;\n";
+        }
 
         indent_down();
 
         f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
-        f_react_ts_ << ts_indent() << "const toggle" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "(!" << member_name << ") };\n\n";
+        f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: ThriftInputBooleanType) => { set" << capitalize(member_name) << "(value) };\n\n";
       } else if (true_member_type->is_binary()) {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << "?.toString('hex') ?? '');\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " != null ? prop" << tstruct->get_name() << "." << member_name << ".toString('hex') : '');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
         f_react_ts_ << ts_indent() << null_check
-                    << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << "Buffer.from(" << member_name << "?? '');\n";
+                    << "prop" << tstruct->get_name() << "." << member_name << " = ";
+
+        if (is_optional) {
+          f_react_ts_ << member_name << " ? Buffer.from(" << member_name << "?? '') : undefined;\n";
+        } else {
+          f_react_ts_ << "Buffer.from(" << member_name << "?? '');\n";
+        }
 
         indent_down();
 
@@ -1467,13 +1495,18 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
         f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
       } else {
 
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " ?? '');\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " != null ? prop" << tstruct->get_name() << "." << member_name << " : '');\n";
         f_react_ts_ << ts_indent() << "useEffect(() => {\n";
         indent_up();
 
         f_react_ts_ << ts_indent() << null_check
-                    << "prop" << tstruct->get_name() << "." << member_name << " = "
-                    << member_name << ";\n";
+                    << "prop" << tstruct->get_name() << "." << member_name << " = ";
+
+        if (is_optional) {
+          f_react_ts_ << member_name << " ? " << member_name << " : undefined;\n";
+        } else {
+          f_react_ts_ << member_name << ";\n";
+        }
 
         indent_down();
 
@@ -1497,17 +1530,27 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "([..." << member_name << "]) };\n\n";
     } else if (true_member_type->is_enum()) {
 
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<string>(prop" << tstruct->get_name() << "." << member_name << " ? " << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[prop" << tstruct->get_name() << "." << member_name << "] : Object.values(" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << ")[0] as string);\n";
+      string enum_type = find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name();
+      if (is_optional) {
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << member_name << " != null ? prop" << tstruct->get_name() << "." << member_name << " : -1);\n";
+      } else {
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << member_name << " != null ? prop" << tstruct->get_name() << "." << member_name << " : " << enum_type << "[Object.values(" << enum_type << ").filter(it => typeof it === 'string')[0] as " << enum_type << "Type]);\n";
+      }
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
-      f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
-                  << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "[" << member_name << " as " << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << "Type];\n";
+      f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = ";
+
+      if (is_optional) {
+        f_react_ts_ << member_name << " !== -1 ? " << member_name << " : undefined;\n";
+      } else {
+        f_react_ts_ << member_name << ";\n";
+      }
 
       indent_down();
 
       f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
-      f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: string) => { set" << capitalize(member_name) << "(value) };\n\n";
+      f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = (value: number) => { set" << capitalize(member_name) << "(value) };\n\n";
     } else if (true_member_type->is_struct()) {
       f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<" << find_include_2_import_name(true_member_type->get_program()) << "_module." << true_member_type->get_name() << " | undefined>(prop" << tstruct->get_name() << "." << member_name << ");\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
@@ -1534,7 +1577,7 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
 
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    string null_type_check = "if (prop" + tstruct->get_name() + "." + (*m_iter)->get_name() + ") ";
+    string null_type_check = "if (prop" + tstruct->get_name() + "." + (*m_iter)->get_name() + " != null) ";
     t_type *member_type = (*m_iter)->get_type();
     t_type *true_member_type = member_type->is_typedef() ? ((t_typedef *)member_type)->get_true_type() : member_type;
 
@@ -1543,7 +1586,12 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
         true_member_type->is_base_type() &&
         !true_member_type->is_binary() &&
         ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_VOID &&
-        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I64
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I64 &&
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_DOUBLE &&
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I32 &&
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I16 &&
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I8 &&
+        ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_BOOL
       ) ||
       true_member_type->is_list() ||
       true_member_type->is_set() ||
@@ -1552,6 +1600,17 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
     ) {
       f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ");\n";
     } else if (
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_DOUBLE ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I32 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I16 ||
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8
+    ) {
+      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(`${prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << "}`);\n";
+    } else if (
+      ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
+    ) {
+      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(booleanToThriftInputBooleanType(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << "));\n";
+    } else if (
       true_member_type->is_base_type() &&
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64
     ) {
@@ -1559,7 +1618,7 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
     } else if (true_member_type->is_binary()) {
       f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ".toString('hex'));\n";
     } else if (true_member_type->is_enum()) {
-      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(" << find_include_2_import_name((*m_iter)->get_type()->get_program()) << "_module." << (*m_iter)->get_type()->get_name() << "[prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << "]);\n";
+      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ");\n";
     }
   }
   indent_down();
@@ -1622,23 +1681,24 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     if (
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
     ) {
-      f_react_ts_ << ts_indent() << "<ThriftInputSwitch\n"
+      f_react_ts_ << ts_indent() << "<ThriftInputBoolean\n"
                   << ts_indent() << "  value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_ << ts_indent() << "  setValue={() => { toggle" << capitalize(member_name) << "(); }}\n";
+        f_react_ts_ << ts_indent() << "  setValue={(value: ThriftInputBooleanType) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={() => {\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: ThriftInputBooleanType) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", !" << member_name << ");\n";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
-          f_react_ts_  << ts_indent() << "    " << member_name << " = !" << member_name << ";\n";
+          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
         f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                      << ts_indent() << "  }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
+      f_react_ts_ << ts_indent() << "  nullable={" << (is_optional ? "true" : "false") << "}\n"
+                  << ts_indent() << "  readonly={readonly}\n"
                   << ts_indent() << "  keyProp={" << key_name << "}\n"
                   << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
                   << ts_indent() << "/>\n";
@@ -1653,13 +1713,13 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
                   << ts_indent() << "  value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(Number(value?? 0)) }}\n";
+        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
         f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", Number(value?? 0));\n";
+          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
         } else {
-          f_react_ts_  << ts_indent() << "    " << member_name << " = Number(value?? 0);\n";
+          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
         }
         f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
                      << ts_indent() << "  }}\n";
@@ -1774,15 +1834,19 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
 
   } else if (true_member_type->is_enum()) {
 
-    string enumType = find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name();
-    f_react_ts_ << ts_indent() << "<ThriftInputSelectList\n"
-                << ts_indent() << "  list={Object.values(" << enumType << ").filter(value => typeof value === 'string')}\n"
-                << ts_indent() << "  value={" << member_name << "}\n";
+    string enum_type = find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name();
+    f_react_ts_ << ts_indent() << "<ThriftInputSelectList\n";
+    if (is_optional) {
+      f_react_ts_ << ts_indent() << "  list={[{key: -1, value: 'null'}, ...Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))]}\n";
+    } else {
+      f_react_ts_ << ts_indent() << "  list={Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))}\n";
+    }
+    f_react_ts_ << ts_indent() << "  value={" << member_name << "}\n";
 
     if (use_setter) {
-      f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
+      f_react_ts_  << ts_indent() << "  setValue={(value: number) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
     } else {
-      f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+      f_react_ts_  << ts_indent() << "  setValue={(value: number) => {\n";
       if (is_replaceable) {
         f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
       } else {
