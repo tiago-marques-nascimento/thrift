@@ -705,7 +705,7 @@ string t_js_generator::render_react_includes() {
  */
 string t_js_generator::render_react_consts() {
   return string(
-    "const CHUNK_LENGTH = 2;\n"
+    "const CHUNK_LENGTH = 100;\n"
     "const groupByChunk = (list: any[]) => {\n"
     "    const chunks: any[][] = [];\n"
     "    list.forEach((i, count) => {\n"
@@ -722,9 +722,9 @@ string t_js_generator::render_react_consts() {
     "type ThriftInputProps = { value: any, setValue: Function, nullable?: boolean, readonly: boolean, keyProp: string, label: string };\n"
     "type ThriftSelectListInputProps = { list: any[], value: any, setValue: Function, readonly: boolean, keyProp: string, label: string };\n"
     "type ThriftStructInputProps = { add: Function, remove?: Function, renderStruct: Function, value: any, readonly: boolean, keyProp: string, label: string };\n"
-    "type ThriftChunkInputProps = { add: Function, list: any[], renderChunkList: Function, readonly: boolean, keyProp: string, label: string };\n"
-    "type ThriftListInputProps = { remove: Function, chunk: number, list: any[], renderListItem: any, readonly: boolean, keyProp: string, label: string };\n"
-    "type ThriftMapInputProps = { remove: Function, chunk: number, list: any[], renderMapKey: any, renderMapValue: any, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftChunkInputProps = { addList?: Function, removeList?: Function, add: Function, list: any[], renderChunkList: Function, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftListInputProps = { remove: Function, chunk: number, chunks: number, list: any[], renderListItem: any, readonly: boolean, keyProp: string, label: string };\n"
+    "type ThriftMapInputProps = { remove: Function, chunk: number, chunks: number, list: any[], renderMapKey: any, renderMapValue: any, readonly: boolean, keyProp: string, label: string };\n"
 
     "type ThriftInputBooleanType = 'false'|'true'|'null';\n"
     "const booleanToThriftInputBooleanType = (value: boolean | undefined): ThriftInputBooleanType => (value != null) ? (value === true ? 'true' : 'false') : 'null';\n"
@@ -849,7 +849,7 @@ string t_js_generator::render_react_consts() {
     "                    remove &&\n"
     "                    <Button\n"
     "                      disabled={readonly}\n"
-    "                      text={`Remove ${label}`}\n"
+    "                      text={`Remove (${label})`}\n"
     "                      size='sm'\n"
     "                      color='gray'\n"
     "                      onClick={() => removeCallback()}\n"
@@ -862,7 +862,7 @@ string t_js_generator::render_react_consts() {
     "        /> :\n"
     "        <Button\n"
     "          disabled={readonly}\n"
-    "          text={`Add ${label}`}\n"
+    "          text={`Add (${label})`}\n"
     "          size='sm'\n"
     "          color='gray'\n"
     "          onClick={() => addCallback()}\n"
@@ -872,171 +872,279 @@ string t_js_generator::render_react_consts() {
     "  );\n"
     "}\n"
 
-    "const ThriftInputChunk = ({ add, list, renderChunkList, readonly, keyProp, label }: ThriftChunkInputProps) => {\n"
+    "const ThriftInputChunk = ({ addList, removeList, add, list, renderChunkList, readonly, keyProp, label }: ThriftChunkInputProps) => {\n"
+    "  const addListCallback = useCallback(() => { if (addList) addList(); }, [addList]);\n"
+    "  const removeListCallback = useCallback(() => { if (removeList) removeList(); }, [removeList]);\n"
     "  const addCallback = useCallback(() => { add(); }, [add]);\n"
-    "  const renderChunkListCallback = useCallback((item: any, i: number) => { return renderChunkList(item, i); }, [renderChunkList]);\n"
-    "  return (\n"
-    "    <Flex.Item flex='grow' key={keyProp}>\n"
-    "      <Module.Expandable\n"
-    "        id={label}\n"
-    "        accessibilityExpandLabel='Expand the module'\n"
-    "        accessibilityCollapseLabel='Collapse the module'\n"
-    "        items={[\n"
-    "          {\n"
-    "            title: label,\n"
-    "            children: (\n"
-    "              <Box justifyContent='start' alignItems='baseline'>\n"
-    "                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                  {\n"
-    "                    groupByChunk(list)?.map((item: any, i: number) =>\n"
+    "  const renderChunkListCallback = useCallback((item: any, i: number, length: number) => { return renderChunkList(item, i, length); }, [renderChunkList]);\n"
+    "  const chunkList = groupByChunk(list);\n"
+    "  return (<>\n"
+    "    {\n"
+    "      (list != null) && (\n"
+    "        <Flex.Item flex='grow' key={keyProp}>\n"
+    "          <Module.Expandable\n"
+    "            id={label}\n"
+    "            accessibilityExpandLabel='Expand the module'\n"
+    "            accessibilityCollapseLabel='Collapse the module'\n"
+    "            items={[\n"
+    "              {\n"
+    "                title: label,\n"
+    "                children: (\n"
+    "                  <Box justifyContent='start' alignItems='baseline'>\n"
+    "                    <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
     "                      {\n"
-    "                        return (\n"
-    "                          <Flex.Item flex='grow' key={i}>\n"
-    "                            <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                             {renderChunkListCallback(item, i)}\n"
-    "                            </Flex>\n"
-    "                          </Flex.Item>\n"
-    "                        );\n"
+    "                        chunkList?.map((item: any, i: number) =>\n"
+    "                          {\n"
+    "                            return (\n"
+    "                              <Flex.Item flex='grow' key={i}>\n"
+    "                                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                 {renderChunkListCallback(item, i, chunkList.length)}\n"
+    "                                </Flex>\n"
+    "                              </Flex.Item>\n"
+    "                            );\n"
+    "                          }\n"
+    "                        )\n"
     "                      }\n"
-    "                    )\n"
-    "                  }\n"
-    "                  <Flex.Item flex='grow'>\n"
-    "                    <Button\n"
-    "                      disabled={readonly}\n"
-    "                      text={`Add ${label}`}\n"
-    "                      size='sm'\n"
-    "                      color='gray'\n"
-    "                      onClick={() => addCallback()}\n"
-    "                    />\n"
-    "                  </Flex.Item>\n"
-    "                </Flex>\n"
-    "              </Box>\n"
-    "            ),\n"
-    "          }\n"
-    "        ]}\n"
-    "      />\n"
-    "    </Flex.Item>\n"
-    "  );\n"
+    "                      <Flex.Item flex='grow'>\n"
+    "                        <Button\n"
+    "                          disabled={readonly}\n"
+    "                          text={`Add (${label})`}\n"
+    "                          size='sm'\n"
+    "                          color='gray'\n"
+    "                          onClick={() => addCallback()}\n"
+    "                        />\n"
+    "                      </Flex.Item>\n"
+    "                    </Flex>\n"
+    "                  </Box>\n"
+    "                ),\n"
+    "              }\n"
+    "            ]}\n"
+    "          />\n"
+    "        </Flex.Item>\n"
+    "      )\n"
+    "    }\n"
+    "    {\n"
+    "      (list != null && removeList) && (\n"
+    "        <Flex.Item flex='grow'>\n"
+    "          <Button\n"
+    "            disabled={readonly}\n"
+    "            text={`Remove List (${label})`}\n"
+    "            size='sm'\n"
+    "            color='gray'\n"
+    "            onClick={() => removeListCallback()}\n"
+    "          />\n"
+    "        </Flex.Item>\n"
+    "      )\n"
+    "    }\n"
+    "    {\n"
+    "      (list == null && addList) && (\n"
+    "        <Flex.Item flex='grow'>\n"
+    "          <Button\n"
+    "            disabled={readonly}\n"
+    "            text={`Add List (${label})`}\n"
+    "            size='sm'\n"
+    "            color='gray'\n"
+    "            onClick={() => addListCallback()}\n"
+    "          />\n"
+    "        </Flex.Item>\n"
+    "      )\n"
+    "    }\n"
+    "  </>);\n"
     "}\n"
 
-    "const ThriftInputList = ({ remove, chunk, list, renderListItem, readonly, keyProp, label }: ThriftListInputProps) => {\n"
+    "const ThriftInputList = ({ remove, chunk, chunks, list, renderListItem, readonly, keyProp, label }: ThriftListInputProps) => {\n"
     "  const removeCallback = useCallback((item: any) => { remove(item); }, [remove]);\n"
     "  const renderListItemCallback = useCallback((item: any, i: number) => { return renderListItem(item, i); }, [renderListItem]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
-    "      <Module.Expandable\n"
-    "        id={label}\n"
-    "        accessibilityExpandLabel='Expand the module'\n"
-    "        accessibilityCollapseLabel='Collapse the module'\n"
-    "        items={[\n"
+    "      {(chunks > 1) ? (\n"
+    "        <Module.Expandable\n"
+    "          id={label}\n"
+    "          accessibilityExpandLabel='Expand the module'\n"
+    "          accessibilityCollapseLabel='Collapse the module'\n"
+    "          items={[\n"
+    "            {\n"
+    "              title: `Chunk[${chunk}]`,\n"
+    "              children: (\n"
+    "                <Box justifyContent='start' alignItems='baseline'>\n"
+    "                  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                    {\n"
+    "                      list?.map((item: any, i: number) =>\n"
+    "                        {\n"
+    "                          return (\n"
+    "                            <Flex.Item flex='grow' key={i}>\n"
+    "                              <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
+    "                                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                  <Flex.Item flex='grow'>\n"
+    "                                    <Label htmlFor={`${label} Item[${i}]`}>\n"
+    "                                      <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
+    "                                    </Label>\n"
+    "                                  </Flex.Item>\n"
+    "                                  {renderListItemCallback(item, i)}\n"
+    "                                  <Flex.Item flex='grow'>\n"
+    "                                    <Button\n"
+    "                                      disabled={readonly}\n"
+    "                                      text={`Remove (${label}[${i}])`}\n"
+    "                                      size='sm'\n"
+    "                                      color='gray'\n"
+    "                                      onClick={() => removeCallback(item)}\n"
+    "                                    />\n"
+    "                                  </Flex.Item>\n"
+    "                                </Flex>\n"
+    "                              </Box>\n"
+    "                            </Flex.Item>\n"
+    "                          );\n"
+    "                        }\n"
+    "                      )\n"
+    "                    }\n"
+    "                  </Flex>\n"
+    "                </Box>\n"
+    "              ),\n"
+    "            }\n"
+    "          ]}\n"
+    "        />\n"
+    "      ) :\n"
+    "      (\n"
+    "        list?.map((item: any, i: number) =>\n"
     "          {\n"
-    "            title: `Chunk[${chunk}]`,\n"
-    "            children: (\n"
-    "              <Box justifyContent='start' alignItems='baseline'>\n"
-    "                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                  {\n"
-    "                    list?.map((item: any, i: number) =>\n"
-    "                      {\n"
-    "                        return (\n"
-    "                          <Flex.Item flex='grow' key={i}>\n"
-    "                            <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "                              <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                                <Flex.Item flex='grow'>\n"
-    "                                  <Label htmlFor={`${label} Item[${i}]`}>\n"
-    "                                    <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
-    "                                  </Label>\n"
-    "                                </Flex.Item>\n"
-    "                                {renderListItemCallback(item, i)}"
-    "                                <Flex.Item flex='grow'>\n"
-    "                                  <Button\n"
-    "                                    disabled={readonly}\n"
-    "                                    text={`Remove ${label}[${i}]`}\n"
-    "                                    size='sm'\n"
-    "                                    color='gray'\n"
-    "                                    onClick={() => removeCallback(item)}\n"
-    "                                  />\n"
-    "                                </Flex.Item>\n"
-    "                              </Flex>\n"
-    "                            </Box>\n"
-    "                          </Flex.Item>\n"
-    "                        );\n"
-    "                      }\n"
-    "                    )\n"
-    "                  }\n"
-    "                </Flex>\n"
-    "              </Box>\n"
-    "            ),\n"
+    "            return (\n"
+    "              <Flex.Item flex='grow' key={i}>\n"
+    "                <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
+    "                  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                    <Flex.Item flex='grow'>\n"
+    "                      <Label htmlFor={`${label} Item[${i}]`}>\n"
+    "                        <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
+    "                      </Label>\n"
+    "                    </Flex.Item>\n"
+    "                      {renderListItemCallback(item, i)}"
+    "                    <Flex.Item flex='grow'>\n"
+    "                      <Button\n"
+    "                        disabled={readonly}\n"
+    "                        text={`Remove (${label}[${i}])`}\n"
+    "                        size='sm'\n"
+    "                        color='gray'\n"
+    "                        onClick={() => removeCallback(item)}\n"
+    "                      />\n"
+    "                    </Flex.Item>\n"
+    "                  </Flex>\n"
+    "                </Box>\n"
+    "              </Flex.Item>\n"
+    "            );\n"
     "          }\n"
-    "        ]}\n"
-    "      />\n"
+    "        )\n"
+    "      )}\n"
     "    </Flex.Item>\n"
     "  );\n"
     "}\n"
 
-    "const ThriftInputMap = ({ remove, chunk, list, renderMapKey, renderMapValue, readonly, keyProp, label }: ThriftMapInputProps) => {\n"
+    "const ThriftInputMap = ({ remove, chunk, chunks, list, renderMapKey, renderMapValue, readonly, keyProp, label }: ThriftMapInputProps) => {\n"
     "  const removeCallback = useCallback((item: any) => { remove(item); }, [remove]);\n"
     "  const renderMapKeyCallback = useCallback((item: any, i: number) => { return renderMapKey(item, i); }, [renderMapKey]);\n"
     "  const renderMapValueCallback = useCallback((item: any, i: number) => { return renderMapValue(item, i); }, [renderMapValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
-    "      <Module.Expandable\n"
-    "        id={label}\n"
-    "        accessibilityExpandLabel='Expand the module'\n"
-    "        accessibilityCollapseLabel='Collapse the module'\n"
-    "        items={[\n"
+    "      {(chunks > 1) ? (\n"
+    "        <Module.Expandable\n"
+    "          id={label}\n"
+    "          accessibilityExpandLabel='Expand the module'\n"
+    "          accessibilityCollapseLabel='Collapse the module'\n"
+    "          items={[\n"
+    "            {\n"
+    "              title: `label Chunk[${chunk}]`,\n"
+    "              children: (\n"
+    "                <Box justifyContent='start' alignItems='baseline'>\n"
+    "                  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                    {\n"
+    "                      list?.map((item: any, i: number) =>\n"
+    "                        {\n"
+    "                          return (\n"
+    "                            <Flex.Item flex='grow' key={i}>\n"
+    "                              <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
+    "                                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                  <Flex.Item flex='grow'>\n"
+    "                                    <Label htmlFor={`${label} Item[${i}]`}>\n"
+    "                                      <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
+    "                                    </Label>\n"
+    "                                  </Flex.Item>\n"
+    "                                  <Flex.Item flex='grow'>\n"
+    "                                    <Box justifyContent='start' alignItems='baseline'>\n"
+    "                                      <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                        {renderMapKeyCallback(item, i)}\n"
+    "                                      </Flex>\n"
+    "                                    </Box>\n"
+    "                                  </Flex.Item>\n"
+    "                                  <Flex.Item flex='grow'>\n"
+    "                                    <Box justifyContent='start' alignItems='baseline'>\n"
+    "                                      <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                        {renderMapValueCallback(item, i)}\n"
+    "                                      </Flex>\n"
+    "                                    </Box>\n"
+    "                                  </Flex.Item>\n"
+    "                                  <Flex.Item flex='grow'>\n"
+    "                                    <Button\n"
+    "                                      disabled={readonly}\n"
+    "                                      text={`Remove (${label}[${i}])`}\n"
+    "                                      size='sm'\n"
+    "                                      color='gray'\n"
+    "                                      onClick={() => removeCallback(item)}\n"
+    "                                    />\n"
+    "                                  </Flex.Item>\n"
+    "                                </Flex>\n"
+    "                              </Box>\n"
+    "                            </Flex.Item>\n"
+    "                          );\n"
+    "                        }\n"
+    "                      )\n"
+    "                    }\n"
+    "                  </Flex>\n"
+    "                </Box>\n"
+    "              ),\n"
+    "            }\n"
+    "          ]}\n"
+    "        />\n"
+    "      ) :\n"
+    "      (\n"
+    "        list?.map((item: any, i: number) =>\n"
     "          {\n"
-    "            title: `label Chunk[${chunk}]`,\n"
-    "            children: (\n"
-    "              <Box justifyContent='start' alignItems='baseline'>\n"
-    "                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                  {\n"
-    "                    list?.map((item: any, i: number) =>\n"
-    "                      {\n"
-    "                        return (\n"
-    "                          <Flex.Item flex='grow' key={i}>\n"
-    "                            <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "                              <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                                <Flex.Item flex='grow'>\n"
-    "                                  <Label htmlFor={`${label} Item[${i}]`}>\n"
-    "                                    <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
-    "                                  </Label>\n"
-    "                                </Flex.Item>\n"
-    "                                <Flex.Item flex='grow'>\n"
-    "                                  <Box justifyContent='start' alignItems='baseline'>\n"
-    "                                    <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                                      {renderMapKeyCallback(item, i)}\n"
-    "                                    </Flex>\n"
-    "                                  </Box>\n"
-    "                                </Flex.Item>\n"
-    "                                <Flex.Item flex='grow'>\n"
-    "                                  <Box justifyContent='start' alignItems='baseline'>\n"
-    "                                    <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "                                      {renderMapValueCallback(item, i)}\n"
-    "                                    </Flex>\n"
-    "                                  </Box>\n"
-    "                                </Flex.Item>\n"
-    "                                <Flex.Item flex='grow'>\n"
-    "                                  <Button\n"
-    "                                    disabled={readonly}\n"
-    "                                    text={`Remove ${label}[${i}]`}\n"
-    "                                    size='sm'\n"
-    "                                    color='gray'\n"
-    "                                    onClick={() => removeCallback(item)}\n"
-    "                                  />\n"
-    "                                </Flex.Item>\n"
-    "                              </Flex>\n"
-    "                            </Box>\n"
-    "                          </Flex.Item>\n"
-    "                        );\n"
-    "                      }\n"
-    "                    )\n"
-    "                  }\n"
-    "                </Flex>\n"
-    "              </Box>\n"
-    "            ),\n"
+    "            return (\n"
+    "              <Flex.Item flex='grow' key={i}>\n"
+    "                <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
+    "                  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                    <Flex.Item flex='grow'>\n"
+    "                      <Label htmlFor={`${label} Item[${i}]`}>\n"
+    "                        <Text><b>{`${label} Item[${i}]`}</b></Text>\n"
+    "                      </Label>\n"
+    "                    </Flex.Item>\n"
+    "                    <Flex.Item flex='grow'>\n"
+    "                      <Box justifyContent='start' alignItems='baseline'>\n"
+    "                        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                          {renderMapKeyCallback(item, i)}\n"
+    "                        </Flex>\n"
+    "                      </Box>\n"
+    "                    </Flex.Item>\n"
+    "                    <Flex.Item flex='grow'>\n"
+    "                      <Box justifyContent='start' alignItems='baseline'>\n"
+    "                        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                          {renderMapValueCallback(item, i)}\n"
+    "                        </Flex>\n"
+    "                      </Box>\n"
+    "                    </Flex.Item>\n"
+    "                    <Flex.Item flex='grow'>\n"
+    "                      <Button\n"
+    "                        disabled={readonly}\n"
+    "                        text={`Remove (${label}[${i}])`}\n"
+    "                        size='sm'\n"
+    "                        color='gray'\n"
+    "                        onClick={() => removeCallback(item)}\n"
+    "                      />\n"
+    "                    </Flex.Item>\n"
+    "                  </Flex>\n"
+    "                </Box>\n"
+    "              </Flex.Item>\n"
+    "            );\n"
     "          }\n"
-    "        ]}\n"
-    "      />\n"
+    "        )\n"
+    "      )}\n"
     "    </Flex.Item>\n"
     "  );\n"
     "}\n"
@@ -1515,7 +1623,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       }
     } else if (true_member_type->is_list() || true_member_type->is_set() || true_member_type->is_map()) {
 
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<any[]>(prop" << tstruct->get_name() << "." << member_name << " ?? []);\n";
+      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<any[] | undefined>(prop" << tstruct->get_name() << "." << member_name << " ?? []);\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
@@ -1527,7 +1635,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       indent_down();
 
       f_react_ts_ << ts_indent() << "}, [" << member_name << "]);\n";
-      f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "([..." << member_name << "]) };\n\n";
+      f_react_ts_ << ts_indent() << "const updateValueOf" << capitalize(member_name) << " = () => { set" << capitalize(member_name) << "([..." << member_name << "!]) };\n\n";
     } else if (true_member_type->is_enum()) {
 
       string enum_type = find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name();
@@ -1681,27 +1789,29 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     if (
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
     ) {
-      f_react_ts_ << ts_indent() << "<ThriftInputBoolean\n"
-                  << ts_indent() << "  value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << " != 'null') && (\n"
+                  << "  <ThriftInputBoolean\n"
+                  << ts_indent() << "    value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_ << ts_indent() << "  setValue={(value: ThriftInputBooleanType) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
+        f_react_ts_ << ts_indent() << "    setValue={(value: ThriftInputBooleanType) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: ThriftInputBooleanType) => {\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: ThriftInputBooleanType) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
+          f_react_ts_  << ts_indent() << "      replace(" << member_name << ", value);\n";
         } else {
-          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+          f_react_ts_  << ts_indent() << "      " << member_name << " = value;\n";
         }
-        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
-                     << ts_indent() << "  }}\n";
+        f_react_ts_  << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "    }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  nullable={" << (is_optional ? "true" : "false") << "}\n"
-                  << ts_indent() << "  readonly={readonly}\n"
-                  << ts_indent() << "  keyProp={" << key_name << "}\n"
-                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
-                  << ts_indent() << "/>\n";
+      f_react_ts_ << ts_indent() << "    nullable={" << (is_optional ? "true" : "false") << "}\n"
+                  << ts_indent() << "    readonly={readonly}\n"
+                  << ts_indent() << "    keyProp={" << key_name << "}\n"
+                  << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "  />\n"
+                  << ts_indent() << ")}</>\n";
 
     } else if (
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8 ||
@@ -1709,223 +1819,245 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I32 ||
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_DOUBLE
     ) {
-      f_react_ts_ << ts_indent() << "<ThriftInputNumberField\n"
-                  << ts_indent() << "  value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << ") && (\n"
+                  << ts_indent() << "  <ThriftInputNumberField\n"
+                  << ts_indent() << "    value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
+          f_react_ts_  << ts_indent() << "      replace(" << member_name << ", value);\n";
         } else {
-          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+          f_react_ts_  << ts_indent() << "      " << member_name << " = value;\n";
         }
-        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
-                     << ts_indent() << "  }}\n";
+        f_react_ts_  << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "    }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
-                  << ts_indent() << "  keyProp={" << key_name << "}\n"
-                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
-                  << ts_indent() << "/>\n";
+      f_react_ts_ << ts_indent() << "    readonly={readonly}\n"
+                  << ts_indent() << "    keyProp={" << key_name << "}\n"
+                  << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "  />\n"
+                  << ts_indent() << ")}</>\n";
 
     } else if (((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64) {
-      f_react_ts_ << ts_indent() << "<ThriftInputTextField\n"
-                  << ts_indent() << "  value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << ") && (\n"
+                  << ts_indent() << "  <ThriftInputTextField\n"
+                  << ts_indent() << "    value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
+          f_react_ts_  << ts_indent() << "      replace(" << member_name << ", value);\n";
         } else {
-          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+          f_react_ts_  << ts_indent() << "      " << member_name << " = value;\n";
         }
-        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
-                     << ts_indent() << "  }}\n";
+        f_react_ts_  << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "    }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
-                  << ts_indent() << "  keyProp={" << key_name << "}\n"
-                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
-                  << ts_indent() << "/>\n";
+      f_react_ts_ << ts_indent() << "    readonly={readonly}\n"
+                  << ts_indent() << "    keyProp={" << key_name << "}\n"
+                  << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "  />\n"
+                  << ts_indent() << ")}</>\n";
 
     } else if (true_member_type->is_binary()) {
-      f_react_ts_ << ts_indent() << "<ThriftInputTextArea\n"
-                  << ts_indent() << "  value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << ") && (\n"
+                  << ts_indent() << "  <ThriftInputTextArea\n"
+                  << ts_indent() << "    value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
+          f_react_ts_  << ts_indent() << "      replace(" << member_name << ", value);\n";
         } else {
-          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+          f_react_ts_  << ts_indent() << "      " << member_name << " = value;\n";
         }
-        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
-                     << ts_indent() << "  }}\n";
+        f_react_ts_  << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "    }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
-                  << ts_indent() << "  keyProp={" << key_name << "}\n"
-                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
-                  << ts_indent() << "/>\n";
+      f_react_ts_ << ts_indent() << "    readonly={readonly}\n"
+                  << ts_indent() << "    keyProp={" << key_name << "}\n"
+                  << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "  />\n"
+                  << ts_indent() << ")}</>\n";
 
     } else {
-      f_react_ts_ << ts_indent() << "<ThriftInputTextField\n"
-                  << ts_indent() << "  value={" << member_name << "}\n";
+      f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << ") && (\n"
+                  << ts_indent() << "  <ThriftInputTextField\n"
+                  << ts_indent() << "    value={" << member_name << "}\n";
 
       if (use_setter) {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => { updateValueOf" << capitalize(member_name) << "(value) }}\n";
       } else {
-        f_react_ts_  << ts_indent() << "  setValue={(value: string) => {\n";
+        f_react_ts_  << ts_indent() << "    setValue={(value: string) => {\n";
         if (is_replaceable) {
-          f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
+          f_react_ts_  << ts_indent() << "      replace(" << member_name << ", value);\n";
         } else {
-          f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+          f_react_ts_  << ts_indent() << "      " << member_name << " = value;\n";
         }
-        f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
-                     << ts_indent() << "  }}\n";
+        f_react_ts_  << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n"
+                     << ts_indent() << "    }}\n";
       }
 
-      f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
-                  << ts_indent() << "  keyProp={" << key_name << "}\n"
-                  << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
-                  << ts_indent() << "/>\n";
+      f_react_ts_ << ts_indent() << "    readonly={readonly}\n"
+                  << ts_indent() << "    keyProp={" << key_name << "}\n"
+                  << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                  << ts_indent() << "  />\n"
+                  << ts_indent() << ")}</>\n";
 
     }
   } else if (true_member_type->is_list() || true_member_type->is_set() || true_member_type->is_map()) {
-    f_react_ts_ << ts_indent() << "<ThriftInputChunk\n"
-                << ts_indent() << "  add={() => {\n";
+    f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << " != null) && (\n"
+                << ts_indent() << "  <ThriftInputChunk\n";
 
-    f_react_ts_ << ts_indent() << "    " << member_name << ".push(" + new_react_object(member_type) + ");\n"
-                << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n";
-
-    f_react_ts_ << ts_indent() << "  }}\n"
-                << ts_indent() << "  list={" << member_name << "}\n"
-                << ts_indent() << "  renderChunkList={(item: any, i: number) => {\n";
-
-    if (true_member_type->is_list() || true_member_type->is_set()) {
-      f_react_ts_ << ts_indent() << "    const replace = (oldItem: any, newItem: any) => {\n"
-                  << ts_indent() << "      " << member_name << "[" << member_name << ".indexOf(oldItem)] = newItem\n"
-                  << ts_indent() << "    };\n";
+    // Only lists coming from structs can be added/removed.
+    if (use_setter) {
+      f_react_ts_ << ts_indent() << "    addList={() => { set" << capitalize(parent_member) << "([]); }}\n"
+                  << ts_indent() << "    removeList={() => { set" << capitalize(parent_member) << "(undefined); }}\n";
     }
 
-    f_react_ts_ << ts_indent() << "    const remove = (item: any) => {\n"
-                << ts_indent() << "      " << member_name << ".splice(" << member_name << ".indexOf(item), 1);\n"
+    f_react_ts_ << ts_indent() << "    add={() => {\n";
+
+    f_react_ts_ << ts_indent() << "      " << member_name << "!.push(" + new_react_object(member_type) + ");\n"
                 << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
 
-    f_react_ts_ << ts_indent() << "    };\n"
-                << ts_indent() << "    return (\n";
+    f_react_ts_ << ts_indent() << "    }}\n"
+                << ts_indent() << "    list={" << member_name << "!}\n"
+                << ts_indent() << "    renderChunkList={(item: any, i: number, length: number) => {\n";
 
-    indent_up(); indent_up();
+    if (true_member_type->is_list() || true_member_type->is_set()) {
+      f_react_ts_ << ts_indent() << "      const replace = (oldItem: any, newItem: any) => {\n"
+                  << ts_indent() << "        " << member_name << "![" << member_name << "!.indexOf(oldItem)] = newItem\n"
+                  << ts_indent() << "      };\n";
+    }
+
+    f_react_ts_ << ts_indent() << "      const remove = (item: any) => {\n"
+                << ts_indent() << "        " << member_name << "!.splice(" << member_name << "!.indexOf(item), 1);\n"
+                << ts_indent() << "        updateValueOf" << capitalize(parent_member) << "();\n";
+
+    f_react_ts_ << ts_indent() << "      };\n"
+                << ts_indent() << "      return (\n";
+
+    indent_up(); indent_up(); indent_up();
     get_react_chunk_component("item", "`item_${i}`", is_optional, false, use_setter ? member_name : parent_member, true_member_type, program, tstruct);
-    indent_down(); indent_down();
+    indent_down(); indent_down(); indent_down();
 
-    f_react_ts_ << ts_indent() << "    );\n"
-                << ts_indent() << "  }}\n"
-                << ts_indent() << "  readonly={readonly}\n"
-                << ts_indent() << "  keyProp={" << key_name << "}\n"
-                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": ChunkList'}\n"
-                << ts_indent() << "/>\n";
+    f_react_ts_ << ts_indent() << "      );\n"
+                << ts_indent() << "    }}\n"
+                << ts_indent() << "    readonly={readonly}\n"
+                << ts_indent() << "    keyProp={" << key_name << "}\n"
+                << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": ChunkList'}\n"
+                << ts_indent() << "  />\n"
+                << ts_indent() << ")}</>\n";
 
   } else if (true_member_type->is_enum()) {
 
     string enum_type = find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name();
-    f_react_ts_ << ts_indent() << "<ThriftInputSelectList\n";
+    f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << " != -1) && (\n"
+                << ts_indent() << "  <ThriftInputSelectList\n";
     if (is_optional) {
-      f_react_ts_ << ts_indent() << "  list={[{key: -1, value: 'null'}, ...Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))]}\n";
+      f_react_ts_ << ts_indent() << "    list={[{key: -1, value: 'null'}, ...Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))]}\n";
     } else {
-      f_react_ts_ << ts_indent() << "  list={Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))}\n";
+      f_react_ts_ << ts_indent() << "    list={Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))}\n";
     }
-    f_react_ts_ << ts_indent() << "  value={" << member_name << "}\n";
+    f_react_ts_ << ts_indent() << "    value={" << member_name << "}\n";
 
     if (use_setter) {
-      f_react_ts_  << ts_indent() << "  setValue={(value: number) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
+      f_react_ts_  << ts_indent() << "    setValue={(value: number) => { updateValueOf" << capitalize(member_name) << "(value); }}\n";
     } else {
-      f_react_ts_  << ts_indent() << "  setValue={(value: number) => {\n";
+      f_react_ts_  << ts_indent() << "    setValue={(value: number) => {\n";
       if (is_replaceable) {
-        f_react_ts_  << ts_indent() << "    replace(" << member_name << ", value);\n";
+        f_react_ts_  << ts_indent() << "      replace(" << member_name << ", value);\n";
       } else {
-        f_react_ts_  << ts_indent() << "    " << member_name << " = value;\n";
+        f_react_ts_  << ts_indent() << "      " << member_name << " = value;\n";
       }
-      f_react_ts_  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n"
-                   << ts_indent() << "  }}\n";
+      f_react_ts_  << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n"
+                   << ts_indent() << "    }}\n";
     }
 
-    f_react_ts_ << ts_indent() << "  readonly={readonly}\n"
-                << ts_indent() << "  keyProp={" << key_name << "}\n"
-                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
-                << ts_indent() << "/>\n";
+    f_react_ts_ << ts_indent() << "    readonly={readonly}\n"
+                << ts_indent() << "    keyProp={" << key_name << "}\n"
+                << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                << ts_indent() << "  />\n"
+                << ts_indent() << ")}</>\n";
 
   } else if (true_member_type->is_struct()) {
-    f_react_ts_ << ts_indent() << "<ThriftInputStruct\n"
-                << ts_indent() << "  add={() => {\n";
+    f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << " != null) && (\n"
+                << ts_indent() << "  <ThriftInputStruct\n"
+                << ts_indent() << "    add={() => {\n";
 
     if (use_setter) {
-      f_react_ts_ << ts_indent() << "    updateValueOf" << capitalize(member_name) << "(" << new_react_object(true_member_type) + ");\n";
+      f_react_ts_ << ts_indent() << "      updateValueOf" << capitalize(member_name) << "(" << new_react_object(true_member_type) + ");\n";
     } else {
-      f_react_ts_ << ts_indent() << "    " << member_name << " = " << new_react_object(true_member_type) + ";\n"
-                  << ts_indent() << "    updateValueOf" << capitalize(parent_member) << "();\n";
-    }
-
-    f_react_ts_ << ts_indent() << "  }}\n"
-                << ts_indent() << "  remove={() => {\n";
-
-    if (use_setter) {
-      f_react_ts_ << ts_indent() << "    updateValueOf" << capitalize(member_name) << "(undefined);\n";
-    } else {
-      f_react_ts_ << ts_indent() << "      " << member_name << " = undefined;\n"
+      f_react_ts_ << ts_indent() << "      " << member_name << " = " << new_react_object(true_member_type) + ";\n"
                   << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
     }
 
-    f_react_ts_ << ts_indent() << "  }}\n"
-                << ts_indent() << "  value={" << member_name << "}\n"
-                << ts_indent() << "  renderStruct={() => {\n";
+    f_react_ts_ << ts_indent() << "    }}\n"
+                << ts_indent() << "    remove={() => {\n";
+
+    if (use_setter) {
+      f_react_ts_ << ts_indent() << "      updateValueOf" << capitalize(member_name) << "(undefined);\n";
+    } else {
+      f_react_ts_ << ts_indent() << "        " << member_name << " = undefined;\n"
+                  << ts_indent() << "        updateValueOf" << capitalize(parent_member) << "();\n";
+    }
+
+    f_react_ts_ << ts_indent() << "    }}\n"
+                << ts_indent() << "    value={" << member_name << "}\n"
+                << ts_indent() << "    renderStruct={() => {\n";
 
     if (true_member_type->get_program() != program) {
-      f_react_ts_ << ts_indent() << "    const " << true_member_type->get_name() << "Form = lazy(() => import('./" + (true_member_type->get_program()->get_name() + "_react") + "').then(module => { return { default: module." << true_member_type->get_name() << "Form } }));\n";
+      f_react_ts_ << ts_indent() << "      const " << true_member_type->get_name() << "Form = lazy(() => import('./" + (true_member_type->get_program()->get_name() + "_react") + "').then(module => { return { default: module." << true_member_type->get_name() << "Form } }));\n";
     }
 
     if (true_member_type->get_program() == program) {
-      f_react_ts_ << ts_indent() << "    return (\n"
-                  << ts_indent() << "      <" << true_member_type->get_name() << "Form\n";
+      f_react_ts_ << ts_indent() << "      return (\n"
+                  << ts_indent() << "        <" << true_member_type->get_name() << "Form\n";
       indent_down();
     } else {
-      f_react_ts_ << ts_indent() << "    return (\n"
-                  << ts_indent() << "      <Suspense fallback={<Text>Loading Struct...</Text>}>\n"
-                  << ts_indent() << "        <" << true_member_type->get_name() << "Form\n";
+      f_react_ts_ << ts_indent() << "      return (\n"
+                  << ts_indent() << "        <Suspense fallback={<Text>Loading Struct...</Text>}>\n"
+                  << ts_indent() << "          <" << true_member_type->get_name() << "Form\n";
     }
 
     if (use_setter) {
-      f_react_ts_ << ts_indent() << "          prop" << true_member_type->get_name() << "={" << member_name << "!}\n"
-                  << ts_indent() << "          setProp" << true_member_type->get_name() << "={updateValueOf" << capitalize(member_name) << "}\n";
+      f_react_ts_ << ts_indent() << "            prop" << true_member_type->get_name() << "={" << member_name << "!}\n"
+                  << ts_indent() << "            setProp" << true_member_type->get_name() << "={updateValueOf" << capitalize(member_name) << "}\n";
     } else {
-      f_react_ts_ << ts_indent() << "          prop" << true_member_type->get_name() << "={ " << member_name << "! }\n"
-                  << ts_indent() << "          setProp" << true_member_type->get_name() <<"={ (value: any) => {\n"
-                  << ts_indent() << "            " << member_name << " = value;\n";
+      f_react_ts_ << ts_indent() << "            prop" << true_member_type->get_name() << "={ " << member_name << "! }\n"
+                  << ts_indent() << "            setProp" << true_member_type->get_name() <<"={ (value: any) => {\n"
+                  << ts_indent() << "              " << member_name << " = value;\n";
       
-      f_react_ts_ << ts_indent() << "            updateValueOf" << capitalize(parent_member) << "();\n"
-                  << ts_indent() << "          }}\n";
+      f_react_ts_ << ts_indent() << "              updateValueOf" << capitalize(parent_member) << "();\n"
+                  << ts_indent() << "            }}\n";
     }
 
-    f_react_ts_ << ts_indent() << "          readonly={readonly}\n"
-                << ts_indent() << "        />\n";
+    f_react_ts_ << ts_indent() << "            readonly={readonly}\n"
+                << ts_indent() << "            hideNullFields={hideNullFields}\n"
+                << ts_indent() << "          />\n";
 
     if (true_member_type->get_program() == program) {
       indent_up();
     } else {
-      f_react_ts_ << ts_indent() << "      </Suspense>\n";
+      f_react_ts_ << ts_indent() << "        </Suspense>\n";
     }
-    f_react_ts_ << ts_indent() << "    );\n"
-                << ts_indent() << "  }}\n"
-                << ts_indent() << "  readonly={readonly}\n"
-                << ts_indent() << "  keyProp={" << key_name << "}\n"
-                << ts_indent() << "  label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
-                << ts_indent() << "/>\n";
+    f_react_ts_ << ts_indent() << "      );\n"
+                << ts_indent() << "    }}\n"
+                << ts_indent() << "    readonly={readonly}\n"
+                << ts_indent() << "    keyProp={" << key_name << "}\n"
+                << ts_indent() << "    label={'" << (is_optional ? "optional" : "") << " " << member_name << ": " << true_member_type->get_name() << "'}\n"
+                << ts_indent() << "  />\n"
+                << ts_indent() << ")}</>\n";
   }
 
   indent_down();
@@ -1938,6 +2070,7 @@ void t_js_generator::get_react_chunk_component(string member_name, string key_na
     f_react_ts_ << ts_indent() << "<ThriftInputList\n"
                 << ts_indent() << "  remove={remove}\n"
                 << ts_indent() << "  chunk={i}\n"
+                << ts_indent() << "  chunks={length}\n"
                 << ts_indent() << "  list={" << member_name << "}\n"
                 << ts_indent() << "  renderListItem={(item: any, i: number) => {\n"
                 << ts_indent() << "    return (\n";
@@ -1956,6 +2089,7 @@ void t_js_generator::get_react_chunk_component(string member_name, string key_na
     f_react_ts_ << ts_indent() << "<ThriftInputMap\n"
                 << ts_indent() << "  remove={remove}\n"
                 << ts_indent() << "  chunk={i}\n"
+                << ts_indent() << "  chunks={length}\n"
                 << ts_indent() << "  list={" << member_name << "}\n"
                 << ts_indent() << "  renderMapKey={(item: any, i: number) => {\n"
                 << ts_indent() << "    return (\n";
@@ -2015,9 +2149,10 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
                     << find_include_2_import_name(tstruct->get_program()) << "_module." << tstruct->get_name() << ";\n"
                     << ts_indent() << "  setProp" << tstruct->get_name() << ": Function;\n"
                     << ts_indent() << "  readonly: boolean;\n"
+                    << ts_indent() << "  hideNullFields: boolean;\n"
                     << ts_indent() << "};\n\n";
         f_react_ts_ << ts_indent() << ts_export() << "const "
-                    << tstruct->get_name() << "Form = ({prop" << tstruct->get_name() << ", setProp" << tstruct->get_name() << ", readonly}: " << tstruct->get_name() << "Props) => {\n";
+                    << tstruct->get_name() << "Form = ({prop" << tstruct->get_name() << ", setProp" << tstruct->get_name() << ", readonly, hideNullFields}: " << tstruct->get_name() << "Props) => {\n";
       }
     }
   } else {
