@@ -1655,9 +1655,9 @@ string t_js_generator::new_react_object(t_type *member_type) {
       return "''";
     }
   } else if (true_member_type->is_list()) {
-    return "[" + new_react_object(((t_list *)true_member_type)->get_elem_type()) + "]";
+    return new_react_object(((t_list *)true_member_type)->get_elem_type());
   } else if (true_member_type->is_set()) {
-    return "[" + new_react_object(((t_set *)true_member_type)->get_elem_type()) + "]";
+    return new_react_object(((t_set *)true_member_type)->get_elem_type());
   } else if (true_member_type->is_map()) {
     return "{ key: " + new_react_object(((t_map *)true_member_type)->get_key_type()) + ", value: " + new_react_object(((t_map *)true_member_type)->get_val_type()) + "}";
   } else if (true_member_type->is_enum()) {
