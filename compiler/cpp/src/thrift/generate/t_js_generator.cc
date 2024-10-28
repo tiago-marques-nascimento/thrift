@@ -705,7 +705,7 @@ string t_js_generator::render_react_includes() {
  */
 string t_js_generator::render_react_consts() {
   return string(
-    "const CHUNK_LENGTH = 2;\n"
+    "const CHUNK_LENGTH = 100;\n"
     "const groupByChunk = (list: any[]) => {\n"
     "    if (!list) { return []; }"
     "    const chunks: any[][] = [];\n"
@@ -734,6 +734,7 @@ string t_js_generator::render_react_consts() {
     "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Box marginTop={3}/>\n"
     "      <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "        <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "          <Label htmlFor={label}>\n"
@@ -763,6 +764,7 @@ string t_js_generator::render_react_consts() {
     "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Box marginTop={3}/>\n"
     "      <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "        <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "          <Label htmlFor={label}>\n"
@@ -787,6 +789,7 @@ string t_js_generator::render_react_consts() {
     "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Box marginTop={3}/>\n"
     "      <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "        <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "          <Label htmlFor={label}>\n"
@@ -811,6 +814,7 @@ string t_js_generator::render_react_consts() {
     "  const setValueCallback = useCallback((value: any) => { setValue(value); }, [setValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Box marginTop={3}/>\n"
     "      <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "        <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "          <Label htmlFor={label}>\n"
@@ -835,6 +839,7 @@ string t_js_generator::render_react_consts() {
     "  const setValueCallback = useCallback((value: number) => { setValue(value); }, [setValue]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
+    "      <Box marginTop={3}/>\n"
     "      <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "        <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "          <Label htmlFor={label}>\n"
@@ -866,16 +871,16 @@ string t_js_generator::render_react_consts() {
     "  const renderStructCallback = useCallback(() => { return renderStruct(); }, [renderStruct]);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
-    "      <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "          <Flex.Item flex='grow' key={`${keyProp}_struct_header`}>\n"
+    "      <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "        <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
+    "          <Flex.Item flex='grow' key={`${keyProp}_struct_header`} alignSelf='stretch'>\n"
     "            <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "              <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "                <Label htmlFor={label}>\n"
     "                  <Text>{label}</Text>\n"
     "                </Label>\n"
     "              </Flex.Item>\n"
-    "              <Flex.Item flex='grow' key={`${keyProp}-add`}>\n"
+    "              <Flex.Item flex='shrink' key={`${keyProp}-add`}>\n"
     "                { (!value) &&\n"
     "                  <Button\n"
     "                    disabled={readonly}\n"
@@ -886,7 +891,7 @@ string t_js_generator::render_react_consts() {
     "                  />\n"
     "                }\n"
     "              </Flex.Item>\n"
-    "              <Flex.Item flex='grow' key={`${keyProp}-expand`}>\n"
+    "              <Flex.Item flex='shrink' key={`${keyProp}-expand`}>\n"
     "                { (value && !expanded) &&\n"
     "                  <Button\n"
     "                    disabled={readonly}\n"
@@ -941,16 +946,16 @@ string t_js_generator::render_react_consts() {
     "  const chunkList = groupByChunk(list);\n"
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
-    "      <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "          <Flex.Item flex='grow' key={`${keyProp}_struct_header`}>\n"
+    "      <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "        <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
+    "          <Flex.Item flex='grow' key={`${keyProp}_struct_header`} alignSelf='stretch'>\n"
     "            <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "              <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "                <Label htmlFor={label}>\n"
     "                  <Text>{label}</Text>\n"
     "                </Label>\n"
     "              </Flex.Item>\n"
-    "              <Flex.Item flex='grow' key={`${keyProp}-add-list`}>\n"
+    "              <Flex.Item flex='shrink' key={`${keyProp}-add-list`}>\n"
     "                { (!list && addList) &&\n"
     "                  <Button\n"
     "                    disabled={readonly}\n"
@@ -961,7 +966,7 @@ string t_js_generator::render_react_consts() {
     "                  />\n"
     "                }\n"
     "              </Flex.Item>\n"
-    "              <Flex.Item flex='grow' key={`${keyProp}-expand`}>\n"
+    "              <Flex.Item flex='shrink' key={`${keyProp}-expand`}>\n"
     "                { (list && !expanded) &&\n"
     "                  <Button\n"
     "                    disabled={readonly}\n"
@@ -986,13 +991,13 @@ string t_js_generator::render_react_consts() {
     "          { (expanded && list && list.length > 0) &&\n"
     "              <Flex.Item flex='grow' key={`${keyProp}-struct-body`}>\n"
     "                <Box justifyContent='start' alignItems='baseline'>\n"
-    "                  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                  <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                    {\n"
     "                      chunkList?.map((item: any, i: number) =>\n"
     "                        {\n"
     "                          return (\n"
     "                            <Flex.Item flex='grow' key={i}>\n"
-    "                              <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                              <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                               {renderChunkListCallback(item, i, chunkList.length)}\n"
     "                              </Flex>\n"
     "                            </Flex.Item>\n"
@@ -1005,32 +1010,35 @@ string t_js_generator::render_react_consts() {
     "              </Flex.Item>\n"
     "          }\n"
     "          { (expanded && list) &&\n"
-    "              <Flex.Item flex='grow' key={`${keyProp}_struct_actions`}>\n"
-    "                <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
-    "                  <Flex.Item flex='grow' key={`${keyProp}-add-item`}>\n"
-    "                    { (list) &&\n"
-    "                      <Button\n"
-    "                        disabled={readonly}\n"
-    "                        text='Add item'\n"
-    "                        size='sm'\n"
-    "                        color='gray'\n"
-    "                        onClick={() => addCallback()}\n"
-    "                      />\n"
-    "                    }\n"
-    "                  </Flex.Item>\n"
-    "                  <Flex.Item flex='grow' key={`${keyProp}-remove-list`}>\n"
-    "                    { (list && removeList) &&\n"
-    "                      <Button\n"
-    "                        disabled={readonly}\n"
-    "                        text='Remove'\n"
-    "                        size='sm'\n"
-    "                        color='gray'\n"
-    "                        onClick={() => removeListCallback()}\n"
-    "                      />\n"
-    "                    }\n"
-    "                  </Flex.Item>\n"
-    "                </Flex>\n"
-    "              </Flex.Item>\n"
+    "              [\n"
+    "                <Box marginTop={3} key='list-spacing'/>,\n"
+    "                <Flex.Item flex='grow' key={`${keyProp}_struct_actions`}>\n"
+    "                  <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
+    "                    <Flex.Item flex='grow' key={`${keyProp}-add-item`}>\n"
+    "                      { (list) &&\n"
+    "                        <Button\n"
+    "                          disabled={readonly}\n"
+    "                          text='Add item'\n"
+    "                          size='sm'\n"
+    "                          color='gray'\n"
+    "                          onClick={() => addCallback()}\n"
+    "                        />\n"
+    "                      }\n"
+    "                    </Flex.Item>\n"
+    "                    <Flex.Item flex='grow' key={`${keyProp}-remove-list`}>\n"
+    "                      { (list && removeList) &&\n"
+    "                        <Button\n"
+    "                          disabled={readonly}\n"
+    "                          text='Remove'\n"
+    "                          size='sm'\n"
+    "                          color='gray'\n"
+    "                          onClick={() => removeListCallback()}\n"
+    "                        />\n"
+    "                      }\n"
+    "                    </Flex.Item>\n"
+    "                  </Flex>\n"
+    "                </Flex.Item>\n"
+    "              ]\n"
     "          }\n"
     "        </Flex>\n"
     "      </Box>\n"
@@ -1046,16 +1054,16 @@ string t_js_generator::render_react_consts() {
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
     "      { (chunks > 1) ?\n"
-    "        <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "          <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "            <Flex.Item flex='grow' key={`${keyProp}_struct_header`}>\n"
+    "        <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "          <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
+    "            <Flex.Item flex='grow' key={`${keyProp}_struct_header`} alignSelf='stretch'>\n"
     "              <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "                <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "                  <Label htmlFor={label}>\n"
     "                    <Text>{`chunk[${chunk}]`}</Text>\n"
     "                  </Label>\n"
     "                </Flex.Item>\n"
-    "                <Flex.Item flex='grow' key={`${keyProp}-expand`}>\n"
+    "                <Flex.Item flex='shrink' key={`${keyProp}-expand`}>\n"
     "                  { !expanded &&\n"
     "                    <Button\n"
     "                      disabled={readonly}\n"
@@ -1081,14 +1089,14 @@ string t_js_generator::render_react_consts() {
     "              <Flex.Item flex='grow' key={`${keyProp}-struct-body`}>\n"
     "                <Box>\n"
     "                   <Box justifyContent='start' alignItems='baseline'>\n"
-    "                    <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                    <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                      {\n"
     "                        list?.map((item: any, i: number) =>\n"
     "                          {\n"
     "                            return (\n"
     "                              <Flex.Item flex='grow' key={i}>\n"
-    "                                <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "                                  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "                                  <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                                    <Flex.Item flex='grow'>\n"
     "                                      <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "                                        <Flex.Item flex='grow'>\n"
@@ -1123,13 +1131,13 @@ string t_js_generator::render_react_consts() {
     "          </Flex>\n"
     "        </Box> :\n"
     "        <Box justifyContent='start' alignItems='baseline'>\n"
-    "          <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "          <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "            {list?.map((item: any, i: number) =>\n"
     "              {\n"
     "                return (\n"
     "                  <Flex.Item flex='grow' key={i}>\n"
-    "                    <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "                      <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                    <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "                      <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                        <Flex.Item flex='grow'>\n"
     "                          <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "                            <Flex.Item flex='grow'>\n"
@@ -1141,6 +1149,7 @@ string t_js_generator::render_react_consts() {
     "                        </Flex.Item>\n"
     "                        {renderListItemCallback(item, i)}\n"
     "                        <Flex.Item flex='grow'>\n"
+    "                          <Box marginTop={3}/>"
     "                          <Button\n"
     "                            disabled={readonly}\n"
     "                            text='Remove item'\n"
@@ -1171,16 +1180,16 @@ string t_js_generator::render_react_consts() {
     "  return (\n"
     "    <Flex.Item flex='grow' key={keyProp}>\n"
     "    { (chunks > 1) ?\n"
-    "      <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
-    "          <Flex.Item flex='grow' key={`${keyProp}_struct_header`}>\n"
+    "      <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "        <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
+    "          <Flex.Item flex='grow' key={`${keyProp}_struct_header`} alignSelf='stretch'>\n"
     "            <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "              <Flex.Item flex='grow' key={`${keyProp}-label`}>\n"
     "                <Label htmlFor={label}>\n"
     "                  <Text>{`chunk[${chunk}]`}</Text>\n"
     "                </Label>\n"
     "              </Flex.Item>\n"
-    "              <Flex.Item flex='grow' key={`${keyProp}-expand`}>\n"
+    "              <Flex.Item flex='shrink' key={`${keyProp}-expand`}>\n"
     "                { !expanded &&\n"
     "                  <Button\n"
     "                    disabled={readonly}\n"
@@ -1206,14 +1215,14 @@ string t_js_generator::render_react_consts() {
     "            <Flex.Item flex='grow' key={`${keyProp}-struct-body`}>\n"
     "              <Box>\n"
     "                <Box justifyContent='start' alignItems='baseline'>\n"
-    "                  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                  <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                    {\n"
     "                      list?.map((item: any, i: number) =>\n"
     "                        {\n"
     "                          return (\n"
     "                            <Flex.Item flex='grow' key={i}>\n"
-    "                              <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "                                <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                              <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "                                <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                                  <Flex.Item flex='grow'>\n"
     "                                    <Flex justifyContent='start' alignItems='baseline' direction='row' gap={6}>\n"
     "                                      <Flex.Item flex='grow'>\n"
@@ -1225,14 +1234,14 @@ string t_js_generator::render_react_consts() {
     "                                  </Flex.Item>\n"
     "                                  <Flex.Item flex='grow'>\n"
     "                                    <Box justifyContent='start' alignItems='baseline'>\n"
-    "                                      <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                      <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                                        {renderMapKeyCallback(item, i)}\n"
     "                                      </Flex>\n"
     "                                    </Box>\n"
     "                                  </Flex.Item>\n"
     "                                  <Flex.Item flex='grow'>\n"
     "                                    <Box justifyContent='start' alignItems='baseline'>\n"
-    "                                      <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                                      <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                                        {renderMapValueCallback(item, i)}\n"
     "                                      </Flex>\n"
     "                                    </Box>\n"
@@ -1261,15 +1270,15 @@ string t_js_generator::render_react_consts() {
     "        </Flex>\n"
     "      </Box> :\n"
     "      <Box justifyContent='start' alignItems='baseline'>\n"
-    "        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "        <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "          {list?.map((item: any, i: number) =>\n"
     "            {\n"
     "              return (\n"
     "                <Flex.Item flex='grow' key={i}>\n"
-    "                  <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4}>\n"
-    "                    <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                  <Box justifyContent='start' alignItems='baseline' borderStyle={'sm'} padding={4} rounding={4} marginTop={3}>\n"
+    "                    <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                      <Flex.Item flex='grow'>\n"
-    "                        <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                        <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                          <Flex.Item flex='grow'>\n"
     "                            <Label htmlFor={`${label} item[${i}]`}>\n"
     "                              <Text><b>{`${label} item[${i}]`}</b></Text>\n"
@@ -1279,14 +1288,14 @@ string t_js_generator::render_react_consts() {
     "                      </Flex.Item>\n"
     "                      <Flex.Item flex='grow'>\n"
     "                        <Box justifyContent='start' alignItems='baseline'>\n"
-    "                          <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                          <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                            {renderMapKeyCallback(item, i)}\n"
     "                          </Flex>\n"
     "                        </Box>\n"
     "                      </Flex.Item>\n"
     "                      <Flex.Item flex='grow'>\n"
     "                        <Box justifyContent='start' alignItems='baseline'>\n"
-    "                          <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+    "                          <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
     "                            {renderMapValueCallback(item, i)}\n"
     "                          </Flex>\n"
     "                        </Box>\n"
@@ -1787,14 +1796,14 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       }
     } else if (true_member_type->is_list() || true_member_type->is_set() || true_member_type->is_map()) {
 
-      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<any[] | undefined>(prop" << tstruct->get_name() << "." << member_name << " ?? []);\n";
+      f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<any[] | undefined>(prop" << tstruct->get_name() << "." << member_name << ");\n";
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
 
       f_react_ts_ << ts_indent() << "prop" << tstruct->get_name() << "." << member_name << " = "
                   << "!!" << member_name << " ? "
                   << "[..." << member_name << "] : "
-                  << "[];\n";
+                  << (is_optional ? "undefined" : "[]") << ";\n";
 
       indent_down();
 
@@ -1849,9 +1858,9 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
 
   indent_up();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-    string null_type_check = "if (prop" + tstruct->get_name() + "." + (*m_iter)->get_name() + " != null) ";
     t_type *member_type = (*m_iter)->get_type();
     t_type *true_member_type = member_type->is_typedef() ? ((t_typedef *)member_type)->get_true_type() : member_type;
+    bool is_optional = (*m_iter)->get_req() == t_field::e_req::T_OPTIONAL;
 
     if (
       (
@@ -1864,33 +1873,41 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
         ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I16 &&
         ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_I8 &&
         ((t_base_type *)(true_member_type))->get_base() != t_base_type::TYPE_BOOL
-      ) ||
+      )
+    ) {
+      f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " ?? '');\n";
+    } else if (
       true_member_type->is_list() ||
       true_member_type->is_set() ||
       true_member_type->is_map() ||
       true_member_type->is_struct()
     ) {
-      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ");\n";
+      f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ");\n";
     } else if (
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_DOUBLE ||
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I32 ||
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I16 ||
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I8
     ) {
-      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(`${prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << "}`);\n";
+      f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(`${prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " ?? ''}`);\n";
     } else if (
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_BOOL
     ) {
-      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(booleanToThriftInputBooleanType(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << "));\n";
+      f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(booleanToThriftInputBooleanType(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << "));\n";
     } else if (
       true_member_type->is_base_type() &&
       ((t_base_type *)(true_member_type))->get_base() == t_base_type::TYPE_I64
     ) {
-      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(BigInt('0x' + (prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ").toOctetString()).toString());\n";
+      f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? BigInt('0x' + (prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ").toOctetString()).toString() : '');\n";
     } else if (true_member_type->is_binary()) {
-      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ".toString('hex'));\n";
+      f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ".toString('hex') : '');\n";
     } else if (true_member_type->is_enum()) {
-      f_react_ts_ << ts_indent() << null_type_check << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ");\n";
+      string enum_type = find_include_2_import_name(true_member_type->get_program()) + "_module." + true_member_type->get_name();
+      if (is_optional) {
+        f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": -1);\n";
+      } else {
+        f_react_ts_ << ts_indent() << "set" << capitalize((*m_iter)->get_name()) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": " << enum_type << "[Object.values(" << enum_type << ").filter(it => typeof it === 'string')[0] as " << enum_type << "Type]);\n";
+      }
     }
   }
   indent_down();
@@ -2083,8 +2100,8 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << " != null) && (\n"
                 << ts_indent() << "  <ThriftInputChunk\n";
 
-    // Only lists coming from structs can be added/removed.
-    if (use_setter) {
+    // If it's coming from lists, it cannot be added/removed.
+    if (!is_replaceable) {
       f_react_ts_ << ts_indent() << "    addList={() => { set" << capitalize(parent_member) << "([]); }}\n"
                   << ts_indent() << "    removeList={() => { set" << capitalize(parent_member) << "(undefined); }}\n";
     }
@@ -2106,10 +2123,10 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
 
     f_react_ts_ << ts_indent() << "      const remove = (item: any) => {\n"
                 << ts_indent() << "        " << member_name << "!.splice(" << member_name << "!.indexOf(item), 1);\n"
-                << ts_indent() << "        updateValueOf" << capitalize(parent_member) << "();\n";
+                << ts_indent() << "        updateValueOf" << capitalize(parent_member) << "();\n"
+                << ts_indent() << "      };\n";
 
-    f_react_ts_ << ts_indent() << "      };\n"
-                << ts_indent() << "      return (\n";
+    f_react_ts_ << ts_indent() << "      return (\n";
 
     indent_up(); indent_up(); indent_up();
     get_react_chunk_component("item", "`item_${i}`", is_optional, false, use_setter ? member_name : parent_member, true_member_type, program, tstruct);
@@ -2166,18 +2183,21 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
                   << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
     }
 
-    f_react_ts_ << ts_indent() << "    }}\n"
-                << ts_indent() << "    remove={() => {\n";
+    f_react_ts_ << ts_indent() << "    }}\n";
 
-    if (use_setter) {
-      f_react_ts_ << ts_indent() << "      updateValueOf" << capitalize(member_name) << "(undefined);\n";
-    } else {
-      f_react_ts_ << ts_indent() << "        " << member_name << " = undefined;\n"
-                  << ts_indent() << "        updateValueOf" << capitalize(parent_member) << "();\n";
+    // If it not replaceable, it means that it's not coming from a list, so we can delete/add new struct.
+    if (!is_replaceable) {
+      f_react_ts_ << ts_indent() << "    remove={() => {\n";
+      if (use_setter) {
+        f_react_ts_ << ts_indent() << "      updateValueOf" << capitalize(member_name) << "(undefined);\n";
+      } else {
+        f_react_ts_ << ts_indent() << "        " << member_name << " = undefined;\n"
+                    << ts_indent() << "        updateValueOf" << capitalize(parent_member) << "();\n";
+      }
+      f_react_ts_ << ts_indent() << "    }}\n";
     }
 
-    f_react_ts_ << ts_indent() << "    }}\n"
-                << ts_indent() << "    value={" << member_name << "}\n"
+    f_react_ts_ << ts_indent() << "    value={" << member_name << "}\n"
                 << ts_indent() << "    renderStruct={() => {\n";
 
     if (true_member_type->get_program() != program) {
@@ -2421,7 +2441,7 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
       indent_up();
 
       f_react_ts_ << ts_indent() << "<Box justifyContent='start' alignItems='baseline' padding={4}>\n"
-                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column' gap={6}>\n"
+                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
                   << ts_indent() << "    <Flex.Item flex='grow' alignSelf='end'>\n"
                   << ts_indent() << "      <Text size={'100'}><Link accessibilityLabel='View on sourcegraph' externalLinkIcon='default' href={`https://sourcegraph.pinadmin.com/github.com/pinternal/thrift-schemas/-/blob/${'" << tstruct->get_program()->get_path() << "'.replace('/usr/home/thrift-schemas/', '')}`} target='blank'>View " << tstruct->get_name() << " in sourcegraph</Link></Text>\n"
                   << ts_indent() << "    </Flex.Item>\n";
