@@ -66,10 +66,61 @@ public:
   }
 
   ~t_program() override {
-    if (scope_) {
-      delete scope_;
-      scope_ = nullptr;
+    /*std::vector<t_typedef*>::iterator typedef_iter;
+    for (typedef_iter = typedefs_.begin(); typedef_iter != typedefs_.end(); ++typedef_iter) {
+      delete (*typedef_iter);
+      (*typedef_iter) = nullptr;
     }
+    typedefs_.clear();
+
+    std::vector<t_enum*>::iterator enum_iter;
+    for (enum_iter = enums_.begin(); enum_iter != enums_.end(); ++enum_iter) {
+      delete (*enum_iter);
+      (*enum_iter) = nullptr;
+    }
+    enums_.clear();
+
+    std::vector<t_const*>::iterator const_iter;
+    for (const_iter = consts_.begin(); const_iter != consts_.end(); ++const_iter) {
+      delete (*const_iter);
+      (*const_iter) = nullptr;
+    }
+    consts_.clear();
+
+    std::vector<t_struct*>::iterator object_iter;
+    for (object_iter = objects_.begin(); object_iter != objects_.end(); ++object_iter) {
+      delete (*object_iter);
+      (*object_iter) = nullptr;
+    }
+    objects_.clear();
+
+    std::vector<t_struct*>::iterator struct_iter;
+    for (struct_iter = structs_.begin(); struct_iter != structs_.end(); ++struct_iter) {
+      delete (*struct_iter);
+      (*struct_iter) = nullptr;
+    }
+    structs_.clear();
+
+    std::vector<t_struct*>::iterator xception_iter;
+    for (xception_iter = xceptions_.begin(); xception_iter != xceptions_.end(); ++xception_iter) {
+      delete (*xception_iter);
+      (*xception_iter) = nullptr;
+    }
+    xceptions_.clear();
+
+    std::vector<t_service*>::iterator service_iter;
+    for (service_iter = services_.begin(); service_iter != services_.end(); ++service_iter) {
+      delete (*service_iter);
+      (*service_iter) = nullptr;
+    }
+    services_.clear();
+
+    std::vector<t_program*>::iterator include_iter;
+    for (include_iter = includes_.begin(); include_iter != includes_.end(); ++include_iter) {
+      delete (*include_iter);
+      (*include_iter) = nullptr;
+    }
+    includes_.clear();*/
   }
 
   // Path accessor
@@ -361,6 +412,12 @@ public:
   void set_recursive(const bool recursive) { recursive_ = recursive; }
 
   bool get_recursive() const { return recursive_; }
+
+  void clear() {
+    if (scope_) {
+      scope_->clear();
+    }
+  }
 
 private:
   // File path

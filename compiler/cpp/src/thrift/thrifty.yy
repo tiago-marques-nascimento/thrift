@@ -360,9 +360,9 @@ Definition:
     {
       pdebug("Definition -> TypeDefinition");
       if (g_parse_mode == PROGRAM) {
-        g_scope->add_type($1->get_name(), $1);
+        g_scope->add_type($1->get_name(), $1, false);
         if (g_parent_scope != nullptr) {
-          g_parent_scope->add_type(g_parent_prefix + $1->get_name(), $1);
+          g_parent_scope->add_type(g_parent_prefix + $1->get_name(), $1, true);
         }
         if (! g_program->is_unique_typename($1)) {
           yyerror("Type \"%s\" is already defined.", $1->get_name().c_str());
@@ -375,9 +375,9 @@ Definition:
     {
       pdebug("Definition -> Service");
       if (g_parse_mode == PROGRAM) {
-        g_scope->add_service($1->get_name(), $1);
+        g_scope->add_service($1->get_name(), $1, false);
         if (g_parent_scope != nullptr) {
-          g_parent_scope->add_service(g_parent_prefix + $1->get_name(), $1);
+          g_parent_scope->add_service(g_parent_prefix + $1->get_name(), $1, true);
         }
         g_program->add_service($1);
         if (! g_program->is_unique_typename($1)) {
@@ -459,9 +459,9 @@ Enum:
           std::string const_name = $$->get_name() + "." + (*c_iter)->get_name();
           t_const_value* const_val = new t_const_value((*c_iter)->get_value());
           const_val->set_enum($$);
-          g_scope->add_constant(const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val));
+          g_scope->add_constant(const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val), false);
           if (g_parent_scope != nullptr) {
-            g_parent_scope->add_constant(g_parent_prefix + const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val));
+            g_parent_scope->add_constant(g_parent_prefix + const_name, new t_const(g_type_i32, (*c_iter)->get_name(), const_val), true);
           }
         }
       }
@@ -526,15 +526,15 @@ Const:
   tok_const FieldType tok_identifier '=' ConstValue CommaOrSemicolonOptional
     {
       pdebug("Const -> tok_const FieldType tok_identifier = ConstValue");
-      if (g_parse_mode == PROGRAM) {
+      if (g_parse_mode == PROGRAM && !g_force_stop_recursion) {
         validate_simple_identifier( $3);
         g_scope->resolve_const_value($5, $2);
         $$ = new t_const($2, $3, $5);
         validate_const_type($$);
 
-        g_scope->add_constant($3, $$);
+        g_scope->add_constant($3, $$, false);
         if (g_parent_scope != nullptr) {
-          g_parent_scope->add_constant(g_parent_prefix + $3, $$);
+          g_parent_scope->add_constant(g_parent_prefix + $3, $$, true);
         }
       } else {
         $$ = nullptr;
@@ -729,7 +729,7 @@ Extends:
     {
       pdebug("Extends -> tok_extends tok_identifier");
       $$ = nullptr;
-      if (g_parse_mode == PROGRAM) {
+      if (g_parse_mode == PROGRAM && !g_force_stop_recursion) {
         $$ = g_scope->get_service($2);
         if ($$ == nullptr) {
           yyerror("Service \"%s\" has not been defined.", $2);
@@ -789,7 +789,7 @@ Throws:
     {
       pdebug("Throws -> tok_throws ( FieldList )");
       $$ = $3;
-      if (g_parse_mode == PROGRAM && !validate_throws($$)) {
+      if (g_parse_mode == PROGRAM && !g_force_stop_recursion && !validate_throws($$)) {
         yyerror("Throws clause may not contain non-exception types");
         exit(1);
       }
@@ -831,7 +831,7 @@ Field:
       $$ = new t_field($4, $6, $2.value);
       $$->set_reference($5);
       $$->set_req($3);
-      if ($7 != nullptr) {
+      if (!g_force_stop_recursion && $7 != nullptr) {
         g_scope->resolve_const_value($7, $4);
         validate_field_value($$, $7);
         $$->set_value($7);

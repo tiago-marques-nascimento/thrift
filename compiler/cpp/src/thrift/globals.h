@@ -67,6 +67,11 @@ extern t_program* g_program;
 extern t_scope* g_scope;
 
 /**
+ * If set to true, don't parse fields along with types
+ */
+extern bool g_force_stop_recursion;
+
+/**
  * The parent scope to also load symbols into
  */
 extern t_scope* g_parent_scope;

@@ -45,7 +45,13 @@ class t_scope {
 public:
   t_scope() = default;
 
-  void add_type(std::string name, t_type* type) { types_[name] = type; }
+  ~t_scope() {
+  }
+
+  void add_type(std::string name, t_type* type, bool is_root) {
+    types_[name] = type;
+    types_is_root_[name] = is_root;
+  }
 
   t_type* get_type(std::string name) { return types_[name]; }
 
@@ -58,7 +64,10 @@ public:
     return nullptr;
   }
 
-  void add_service(std::string name, t_service* service) { services_[name] = service; }
+  void add_service(std::string name, t_service* service, bool is_root) {
+    services_[name] = service;
+    services_is_root_[name] = is_root;
+  }
 
   t_service* get_service(std::string name) { return services_[name]; }
 
@@ -71,11 +80,12 @@ public:
     return nullptr;
   }
 
-  void add_constant(std::string name, t_const* constant) {
+  void add_constant(std::string name, t_const* constant, bool is_root) {
     if (constants_.find(name) != constants_.end()) {
       throw "Enum " + name + " is already defined!";
     } else {
       constants_[name] = constant;
+      constants_is_root_[name] = is_root;
     }
   }
 
@@ -209,6 +219,49 @@ public:
     }
   }
 
+  void clear() {
+    std::map<std::string, bool>::iterator is_root_iter;
+    std::map<std::string, t_type*>::iterator types_iter;
+    for (types_iter = types_.begin(); types_iter != types_.end(); ++types_iter) {
+      for (is_root_iter = types_is_root_.begin(); is_root_iter != types_is_root_.end(); ++is_root_iter) {
+        if ((*is_root_iter).first == (*types_iter).first) {
+          if ((*is_root_iter).second) {
+            delete (*types_iter).second;
+            (*types_iter).second = nullptr;
+          }
+          break;
+        }
+      }
+    }
+
+    std::map<std::string, t_const*>::iterator constants_iter;
+    for (constants_iter = constants_.begin(); constants_iter != constants_.end(); ++constants_iter) {
+      for (is_root_iter = constants_is_root_.begin(); is_root_iter != constants_is_root_.end(); ++is_root_iter) {
+        if ((*is_root_iter).first == (*constants_iter).first) {
+          if ((*is_root_iter).second) {
+            delete (*constants_iter).second;
+            (*constants_iter).second = nullptr;
+          }
+          break;
+        }
+      }
+    }
+
+    std::map<std::string, t_service*>::iterator services_iter;
+    for (services_iter = services_.begin(); services_iter != services_.end(); ++services_iter) {
+      for (is_root_iter = services_is_root_.begin(); is_root_iter != services_is_root_.end(); ++is_root_iter) {
+        if ((*is_root_iter).first == (*services_iter).first) {
+          if ((*is_root_iter).second) {
+            delete (*services_iter).second;
+            (*services_iter).second = nullptr;
+          }
+          break;
+        }
+      }
+    }
+    services_.clear();
+  }
+
 private:
   // Map of names to types
   std::map<std::string, t_type*> types_;
@@ -218,6 +271,15 @@ private:
 
   // Map of names to services
   std::map<std::string, t_service*> services_;
+
+    // Map of names to types
+  std::map<std::string, bool> types_is_root_;
+
+  // Map of names to constants
+  std::map<std::string, bool> constants_is_root_;
+
+  // Map of names to services
+  std::map<std::string, bool> services_is_root_;
 };
 
 #endif

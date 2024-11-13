@@ -76,7 +76,8 @@ const cases = {
 
     for (let i = 0; i < EXPECTED_INT64_LIST.length; ++i){
       let int64Object = EXPECTED_INT64_LIST[i];
-      assert.ok(i64types.INT64_2_INT64_MAP.find(it => JSONInt64.toDecimalString(it.key) === JSONInt64.toDecimalString(int64Object))?.value.equals(int64Object));
+      const expectedAsString = i64types.INT64_2_INT64_MAP.find(it => JSONInt64.toDecimalString(it.key) === JSONInt64.toDecimalString(int64Object));
+      assert.ok(expectedAsString ? expectedAsString.value.equals(int64Object) : false);
     }
 
     assert.end();

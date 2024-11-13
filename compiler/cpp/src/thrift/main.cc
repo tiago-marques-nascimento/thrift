@@ -69,6 +69,11 @@ t_program* g_program;
 t_scope* g_scope;
 
 /**
+ * Global force stop recursion
+ */
+bool g_force_stop_recursion;
+
+/**
  * Parent scope to also parse types
  */
 t_scope* g_parent_scope;
@@ -1032,7 +1037,7 @@ void parse_includes(t_program* program) {
 /**
  * Parses a program types
  */
-void parse_types(t_program* program, t_program* parent_program) {
+void parse_types(t_program* program, t_program* parent_program, bool force_stop_recursion) {
   // Get scope file path
   string path = program->get_path();
 
@@ -1045,6 +1050,7 @@ void parse_types(t_program* program, t_program* parent_program) {
   g_parse_mode = PROGRAM;
   g_program = program;
   g_scope = program->scope();
+  g_force_stop_recursion = force_stop_recursion;
   g_parent_scope = (parent_program != nullptr) ? parent_program->scope() : nullptr;
   g_parent_prefix = program->get_name() + ".";
 
@@ -1072,10 +1078,15 @@ void parse_types(t_program* program, t_program* parent_program) {
 /**
  * Generate code
  */
-void generate(t_program* program, t_program* parent_program, const vector<string>& generator_strings, std::set<std::string>& known_includes) {
-
-  printf("start of recursion %s \n", program->get_path().c_str());
-
+void generate(
+  t_program* program,
+  t_program* parent_program,
+  const vector<string>& generator_strings,
+  std::set<std::string>& known_includes,
+  std::set<std::string>& generated_includes,
+  bool force_stop_recursion,
+  int level
+) {
   // (tmarquesdonascimento): Parse program
   pverbose("Parse program: %s\n", program->get_path().c_str());
   parse_includes(program);
@@ -1090,40 +1101,72 @@ void generate(t_program* program, t_program* parent_program, const vector<string
   if (gen_recurse) {
     program->set_recursive(true);
     const vector<t_program*>& includes = program->get_includes();
+    int count = 0;
     for (auto include : includes) {
       // Propagate output path from parent to child programs
       include->set_out_path(program->get_out_path(), program->is_out_path_absolute());
 
-      generate(include, program, generator_strings, known_includes);
+      // (tmarquesdonascimento): only do recursive generation if the include has typedef that the parent might use, or if the parent has not been generated already
+      std::set<std::string>::iterator is_already_generated_iter = generated_includes.find(include->get_path());
+      bool is_already_generated = is_already_generated_iter != generated_includes.end();
+      for (int hum = 0; hum < level; hum++) {
+        printf("  ");
+      }
+      if (!force_stop_recursion) {
+        printf(
+          "%s is_already_generated %i, level %i: %i of %lu\n",
+          include->get_name().c_str(),
+          is_already_generated,
+          level,
+          count,
+          includes.size()
+        );
+        generate(include, program, generator_strings, known_includes, generated_includes, is_already_generated, level + 1);
+      } else {
+          printf("Phew, able to save some resources here: %s\n", include->get_path().c_str());
+      }
+      count++;
     }
   }
 
   // Generate code!
   try {
+    for (int hum = 0; hum < level; hum++) {
+      printf("  ");
+    }
+    printf("Generating code for: %s\n", program->get_path().c_str());
+
     pverbose("Program: %s\n", program->get_path().c_str());
 
-    parse_types(program, parent_program);
+    parse_types(program, parent_program, force_stop_recursion);
 
     if (dump_docs) {
       dump_docstrings(program);
     }
 
-    // make sure all symbolic constants are properly resolved
-    program->scope()->resolve_all_consts();
+    if (!force_stop_recursion) {
+      // make sure all symbolic constants are properly resolved
+      program->scope()->resolve_all_consts();
 
-    vector<string>::const_iterator iter;
-    for (iter = generator_strings.begin(); iter != generator_strings.end(); ++iter) {
-      t_generator* generator = t_generator_registry::get_generator(program, *iter);
+      vector<string>::const_iterator iter;
+      for (iter = generator_strings.begin(); iter != generator_strings.end(); ++iter) {
+        t_generator* generator = t_generator_registry::get_generator(program, *iter);
 
-      if (generator == nullptr) {
-        pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
-        g_generator_failure = true;
-      } else if (generator) {
-        generator->validate_input();
-        pverbose("Generating \"%s\"\n", iter->c_str());
-        generator->generate_program();
-        delete generator;
+        if (generator == nullptr) {
+          pwarning(1, "Unable to get a generator for \"%s\".\n", iter->c_str());
+          g_generator_failure = true;
+        } else if (generator) {
+          generator->validate_input();
+          pverbose("Generating \"%s\"\n", iter->c_str());
+          generator->generate_program();
+          delete generator;
+        }
       }
+    } else {
+      for (int hum = 0; hum < level; hum++) {
+        printf("  ");
+      }
+      printf("Ops... skipping generating code for: %s\n", program->get_path().c_str());
     }
   } catch (string &s) {
     failure("Error: %s\n", s.c_str());
@@ -1136,16 +1179,17 @@ void generate(t_program* program, t_program* parent_program, const vector<string
   // (tmarquesdonascimento): Check for include recursions
   known_includes.erase(path);
 
-  // (tmarquesdonascimento) Undo recursive include parsing if recursive generation is enabled
+  // (tmarquesdonascimento): set generated program
+  generated_includes.insert(path).second;
+
+  // (tmarquesdonascimento) Undo recursive include parsing on two level if recursive generation is enabled
   if (gen_recurse) {
     vector<t_program*>& includes = program->get_includes();
     vector<t_program*>::iterator iter;
     for (iter = includes.begin(); iter != includes.end(); ++iter) {
-      delete (*iter);
+      (*iter)->clear();
     }
   }
-
-  printf("reaching end of recursion %s \n", program->get_path().c_str());
 }
 
 void audit(t_program* new_program,
@@ -1387,7 +1431,9 @@ int main(int argc, char** argv) {
 
     // Generate it!
     std::set<std::string> known_includes;
-    generate(program, nullptr, generator_strings, known_includes);
+    std::set<std::string> generated_includes;
+    std::map<std::string, bool> generated_includes_has_typedef;
+    generate(program, nullptr, generator_strings, known_includes, generated_includes, false, 0);
     delete program;
   }
 
