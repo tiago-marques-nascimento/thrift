@@ -2409,11 +2409,12 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
       out << indent() << "this." << (*m_iter)->get_name() << " = " << dval << ";" << '\n';
     } else {
       out << indent() << dval << ";" << '\n';
-
-      // (tmarquesdonascimento):: Add thrift type member to js file
-      out << ts_indent() << "this." << "__" << (*m_iter)->get_name() << "__ttype "
-          << "= \"" + get_member_type((*m_iter)->get_type()) + "\";" << '\n';
     }
+
+    // (tmarquesdonascimento):: Add thrift type member to js file
+    out << ts_indent() << "this." << "__" << (*m_iter)->get_name() << "__ttype "
+        << "= \"" + get_member_type((*m_iter)->get_type()) + "\";" << '\n';
+
     if (gen_ts_) {
       string ts_access = gen_node_ ? "public " : "";
       string member_name = (*m_iter)->get_name();
