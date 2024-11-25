@@ -245,7 +245,7 @@ public:
    */
   void get_react_state_and_use_effect(t_struct *tstruct, t_field* tfield);
   void get_react_initial_use_effect(t_struct *tstruct);
-  string new_react_object(t_type *member_type);
+  string new_react_object(t_type *member_type, bool first);
   void get_react_component(
     string member_name,
     string key_name,
@@ -289,7 +289,7 @@ public:
            + "//\n";
   }
 
-  t_type* get_contained_type(t_type* t);
+  std::string build_contained_prodecure(t_type* t, std::string it);
 
   std::vector<std::string> js_namespace_pieces(t_program* p) {
     std::string ns = p->get_namespace("js");
@@ -1592,19 +1592,19 @@ void t_js_generator::generate_js_struct(t_struct* tstruct, bool is_exception) {
 }
 
 /**
- * Return type of contained elements for a container type. For maps
- * this is type of value (keys are always strings in js)
+ * (tmarquesdonascimento)
+ * Builds the instructions to get a new contained type.
  */
-t_type* t_js_generator::get_contained_type(t_type* t) {
-  t_type* etype;
-  if (t->is_list()) {
-    etype = ((t_list*)t)->get_elem_type();
-  } else if (t->is_set()) {
-    etype = ((t_set*)t)->get_elem_type();
+std::string t_js_generator::build_contained_prodecure(t_type* t, std::string it) {
+  if (t->is_list() || t->is_set()) {
+    return it + ".map(it => " + build_contained_prodecure(((t_list*)t)->get_elem_type()->get_true_type(), "it") + ")";
+  } else if (t->is_map()) {
+    return it + ".map(it => ({ key: " + build_contained_prodecure(((t_map*)t)->get_key_type()->get_true_type(), "it.key") + ", value: " + build_contained_prodecure(((t_map*)t)->get_val_type()->get_true_type(), "it.value") + "}))";
+  } else if (t->is_struct()) {
+    return "new " + js_type_namespace(t->get_program()) + t->get_name() + "(" + it + ")";
   } else {
-    etype = ((t_map*)t)->get_val_type();
+    return it;
   }
-  return etype;
 }
 
 // (tmarquesdonascimento): method to get the ttype.
@@ -1922,7 +1922,7 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
 }
 
 // (tmarquesdonascimento): method to get the react component.
-string t_js_generator::new_react_object(t_type *member_type) {
+string t_js_generator::new_react_object(t_type *member_type, bool first) {
   t_type *true_member_type = member_type->is_typedef() ? ((t_typedef *)member_type)->get_true_type() : member_type;
 
   if (
@@ -1950,11 +1950,11 @@ string t_js_generator::new_react_object(t_type *member_type) {
       return "''";
     }
   } else if (true_member_type->is_list()) {
-    return new_react_object(((t_list *)true_member_type)->get_elem_type());
+    return first ? new_react_object(((t_list *)true_member_type)->get_elem_type(), false) : "[]";
   } else if (true_member_type->is_set()) {
-    return new_react_object(((t_set *)true_member_type)->get_elem_type());
+    return first ? new_react_object(((t_set *)true_member_type)->get_elem_type(), false) : "[]";
   } else if (true_member_type->is_map()) {
-    return "{ key: " + new_react_object(((t_map *)true_member_type)->get_key_type()) + ", value: " + new_react_object(((t_map *)true_member_type)->get_val_type()) + "}";
+    return first ? "{ key: " + new_react_object(((t_map *)true_member_type)->get_key_type(), false) + ", value: " + new_react_object(((t_map *)true_member_type)->get_val_type(), false) + "}" : "[]";
   } else if (true_member_type->is_enum()) {
     return "''";
   } else if (true_member_type->is_struct()) {
@@ -2114,7 +2114,7 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
 
     f_react_ts_ << ts_indent() << "    add={() => {\n";
 
-    f_react_ts_ << ts_indent() << "      " << member_name << "!.push(" + new_react_object(member_type) + ");\n"
+    f_react_ts_ << ts_indent() << "      " << member_name << "!.push(" + new_react_object(member_type, true) + ");\n"
                 << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
 
     f_react_ts_ << ts_indent() << "    }}\n"
@@ -2183,15 +2183,15 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
                 << ts_indent() << "    add={() => {\n";
 
     if (use_setter) {
-      f_react_ts_ << ts_indent() << "      updateValueOf" << capitalize(member_name) << "(" << new_react_object(true_member_type) + ");\n";
+      f_react_ts_ << ts_indent() << "      updateValueOf" << capitalize(member_name) << "(" << new_react_object(true_member_type, true) + ");\n";
     } else {
-      f_react_ts_ << ts_indent() << "      " << member_name << " = " << new_react_object(true_member_type) + ";\n"
+      f_react_ts_ << ts_indent() << "      " << member_name << " = " << new_react_object(true_member_type, true) + ";\n"
                   << ts_indent() << "      updateValueOf" << capitalize(parent_member) << "();\n";
     }
 
     f_react_ts_ << ts_indent() << "    }}\n";
 
-    // If it not replaceable, it means that it's not coming from a list, so we can delete/add new struct.
+    // If it's not replaceable, it means that it's not coming from a list, so we can delete/add new struct.
     if (!is_replaceable) {
       f_react_ts_ << ts_indent() << "    remove={() => {\n";
       if (use_setter) {
@@ -2507,37 +2507,10 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
 
       if (t->is_struct()) {
         out << (" = new " + js_type_namespace(t->get_program()) + t->get_name() +
-                "(args."+(*m_iter)->get_name() +");");
+                "(args." + (*m_iter)->get_name() + ");");
         out << '\n';
       } else if (t->is_container()) {
-        t_type* etype = get_contained_type(t);
-        string copyFunc = t->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
-        string type_list = "";
-
-        while (etype->is_container()) {
-          if (type_list.length() > 0) {
-            type_list += ", ";
-          }
-          type_list += etype->is_map() ? "Thrift.copyMap" : "Thrift.copyList";
-          etype = get_contained_type(etype);
-        }
-
-        if (etype->is_struct()) {
-          if (type_list.length() > 0) {
-            type_list += ", ";
-          }
-          type_list += js_type_namespace(etype->get_program()) + etype->get_name();
-        }
-        else {
-          if (type_list.length() > 0) {
-            type_list += ", ";
-          }
-          type_list += "null";
-        }
-
-        out << (" = " + copyFunc + "(args." + (*m_iter)->get_name() +
-                ", [" + type_list + "]);");
-        out << '\n';
+        out << " = " << build_contained_prodecure(t, "args." + (*m_iter)->get_name()) << "\n";
       } else {
         out << " = args." << (*m_iter)->get_name() << ";" << '\n';
       }
