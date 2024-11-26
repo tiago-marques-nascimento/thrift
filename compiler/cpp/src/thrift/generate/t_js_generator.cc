@@ -868,8 +868,8 @@ string t_js_generator::render_react_consts() {
 
     "const ThriftInputStruct = ({ add, remove, renderStruct, value, readonly, keyProp, label }: ThriftStructInputProps) => {\n"
     "  const [expanded, setExpanded] = useState<boolean>(false);\n"
-    "  useEffect(() => { setExpanded(true); }, []);\n"
-    "  const addCallback = useCallback(() => { add(); }, [add]);\n"
+    "  useEffect(() => { setExpanded(false); }, []);\n"
+    "  const addCallback = useCallback(() => { add(); setExpanded(true); }, [add]);\n"
     "  const removeCallback = useCallback(() => { remove!(); }, [remove]);\n"
     "  const renderStructCallback = useCallback(() => { return renderStruct(); }, [renderStruct]);\n"
     "  return (\n"
@@ -941,10 +941,10 @@ string t_js_generator::render_react_consts() {
 
     "const ThriftInputChunk = ({ addList, removeList, add, list, renderChunkList, readonly, keyProp, label }: ThriftChunkInputProps) => {\n"
     "  const [expanded, setExpanded] = useState<boolean>(false);\n"
-    "  useEffect(() => { setExpanded(true); }, []);\n"
-    "  const addListCallback = useCallback(() => { if (addList) addList(); }, [addList]);\n"
+    "  useEffect(() => { setExpanded(false); }, []);\n"
+    "  const addListCallback = useCallback(() => { if (addList) { addList(); }  setExpanded(true); }, [addList]);\n"
     "  const removeListCallback = useCallback(() => { if (removeList) removeList(); }, [removeList]);\n"
-    "  const addCallback = useCallback(() => { add(); }, [add]);\n"
+    "  const addCallback = useCallback(() => { add();  setExpanded(true); }, [add]);\n"
     "  const renderChunkListCallback = useCallback((item: any, i: number, length: number) => { return renderChunkList(item, i, length); }, [renderChunkList]);\n"
     "  const chunkList = groupByChunk(list);\n"
     "  return (\n"
@@ -1051,7 +1051,7 @@ string t_js_generator::render_react_consts() {
 
     "const ThriftInputList = ({ remove, chunk, chunks, list, renderListItem, readonly, keyProp, label }: ThriftListInputProps) => {\n"
     "  const [expanded, setExpanded] = useState<boolean>(false);\n"
-    "  useEffect(() => { setExpanded(true); }, []);\n"
+    "  useEffect(() => { setExpanded(false); }, []);\n"
     "  const removeCallback = useCallback((item: any) => { remove(item); }, [remove]);\n"
     "  const renderListItemCallback = useCallback((item: any, i: number) => { return renderListItem(item, i); }, [renderListItem]);\n"
     "  return (\n"
@@ -1176,7 +1176,7 @@ string t_js_generator::render_react_consts() {
 
     "const ThriftInputMap = ({ remove, chunk, chunks, list, renderMapKey, renderMapValue, readonly, keyProp, label }: ThriftMapInputProps) => {\n"
     "  const [expanded, setExpanded] = useState<boolean>(false);\n"
-    "  useEffect(() => { setExpanded(true); }, []);\n"
+    "  useEffect(() => { setExpanded(false); }, []);\n"
     "  const removeCallback = useCallback((item: any) => { remove(item); }, [remove]);\n"
     "  const renderMapKeyCallback = useCallback((item: any, i: number) => { return renderMapKey(item, i); }, [renderMapKey]);\n"
     "  const renderMapValueCallback = useCallback((item: any, i: number) => { return renderMapValue(item, i); }, [renderMapValue]);\n"
