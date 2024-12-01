@@ -1098,7 +1098,7 @@ void generate(
   }
 
   // Oooohh, recursive code generation, hot!!
-  if (gen_recurse) {
+  if (gen_recurse || !force_stop_recursion) {
     program->set_recursive(true);
     const vector<t_program*>& includes = program->get_includes();
     int count = 0;
@@ -1121,7 +1121,7 @@ void generate(
           count,
           includes.size()
         );
-        generate(include, program, generator_strings, known_includes, generated_includes, is_already_generated, level + 1);
+        generate(include, program, generator_strings, known_includes, generated_includes, !gen_recurse || is_already_generated, level + 1);
       } else {
           printf("Phew, able to save some resources here: %s\n", include->get_path().c_str());
       }
