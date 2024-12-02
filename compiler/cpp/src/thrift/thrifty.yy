@@ -526,16 +526,30 @@ Const:
   tok_const FieldType tok_identifier '=' ConstValue CommaOrSemicolonOptional
     {
       pdebug("Const -> tok_const FieldType tok_identifier = ConstValue");
-      if (g_parse_mode == PROGRAM && !g_force_stop_recursion) {
-        validate_simple_identifier( $3);
-        g_scope->resolve_const_value($5, $2);
-        $$ = new t_const($2, $3, $5);
-        validate_const_type($$);
 
-        g_scope->add_constant($3, $$, false);
-        if (g_parent_scope != nullptr) {
-          g_parent_scope->add_constant(g_parent_prefix + $3, $$, true);
+      // Consts from same program should always be resolved.
+      std::string ttype_name($3);
+      bool is_same_program = ttype_name.find(".") == std::string::npos;
+      printf("hummm000 %s %i\n", $3, (int)is_same_program);
+      if (g_parse_mode == PROGRAM/* && (is_same_program || !g_force_stop_recursion)*/) {
+        //printf("hummmmm1\n");
+        validate_simple_identifier( $3);
+        //printf("hummmmm2\n");
+        if(g_scope->resolve_const_value($5, $2, g_force_stop_recursion)) { //Error here.
+          //printf("hummmmm3\n");
+          $$ = new t_const($2, $3, $5);
+          //printf("hummmmm4\n");
+          validate_const_type($$);
+          //printf("hummmmm5\n");
+
+          g_scope->add_constant($3, $$, false);
+          printf("hummmmm6\n");
+          if (g_parent_scope != nullptr) {
+            //printf("hummmmm7\n");
+            g_parent_scope->add_constant(g_parent_prefix + $3, $$, true);
+          }
         }
+        //printf("hummmmm8\n");
       } else {
         $$ = nullptr;
       }
@@ -832,9 +846,10 @@ Field:
       $$->set_reference($5);
       $$->set_req($3);
       if (!g_force_stop_recursion && $7 != nullptr) {
-        g_scope->resolve_const_value($7, $4);
-        validate_field_value($$, $7);
-        $$->set_value($7);
+        if(g_scope->resolve_const_value($7, $4, g_force_stop_recursion)) {
+          validate_field_value($$, $7);
+          $$->set_value($7);
+        }
       }
       $$->set_xsd_optional($8);
       $$->set_xsd_nillable($9);

@@ -122,6 +122,8 @@ public:
     }
 
     if (ttype->is_map()) {
+      printf("hummmm10\n");
+      printf("hummmm100 %s\n", const_val->get_identifier().c_str());
       const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
       std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
       for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
@@ -129,18 +131,21 @@ public:
         resolve_const_value(v_iter->second, ((t_map*)ttype)->get_val_type());
       }
     } else if (ttype->is_list()) {
+      printf("hummmm9\n");
       const std::vector<t_const_value*>& val = const_val->get_list();
       std::vector<t_const_value*>::const_iterator v_iter;
       for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
         resolve_const_value((*v_iter), ((t_list*)ttype)->get_elem_type());
       }
     } else if (ttype->is_set()) {
+      printf("hummmm8\n");
       const std::vector<t_const_value*>& val = const_val->get_list();
       std::vector<t_const_value*>::const_iterator v_iter;
       for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
         resolve_const_value((*v_iter), ((t_set*)ttype)->get_elem_type());
       }
     } else if (ttype->is_struct()) {
+      printf("hummmm7\n");
       auto* tstruct = (t_struct*)ttype;
       const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
       std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
@@ -154,10 +159,12 @@ public:
       }
     } else if (const_val->get_type() == t_const_value::CV_IDENTIFIER) {
       if (ttype->is_enum()) {
+        printf("hummmm6\n");
         const_val->set_enum((t_enum*)ttype);
       } else {
         t_const* constant = get_constant(const_val->get_identifier());
         if (constant == nullptr) {
+          printf("hummmm5\n");
           throw "No enum value or constant found named \"" + const_val->get_identifier() + "\"!";
         }
 
@@ -165,6 +172,7 @@ public:
         t_type* const_type = constant->get_type()->get_true_type();
 
         if (const_type->is_base_type()) {
+          printf("hummmm4\n");
           switch (((t_base_type*)const_type)->get_base()) {
           case t_base_type::TYPE_I16:
           case t_base_type::TYPE_I32:
@@ -186,6 +194,7 @@ public:
             throw "Constants cannot be of type VOID";
           }
         } else if (const_type->is_map()) {
+          printf("hummmm3\n");
           const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = constant->get_value()->get_map();
           std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
 
@@ -194,6 +203,7 @@ public:
             const_val->add_map(v_iter->first, v_iter->second);
           }
         } else if (const_type->is_list()) {
+          printf("hummmm2\n");
           const std::vector<t_const_value*>& val = constant->get_value()->get_list();
           std::vector<t_const_value*>::const_iterator v_iter;
 
@@ -206,6 +216,7 @@ public:
     } else if (ttype->is_enum()) {
       // enum constant with non-identifier value. set the enum and find the
       // value's name.
+      printf("hummmm1\n");
       auto* tenum = (t_enum*)ttype;
       t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
       if (enum_value == nullptr) {
@@ -217,6 +228,140 @@ public:
       const_val->set_identifier(tenum->get_name() + "." + enum_value->get_name());
       const_val->set_enum(tenum);
     }
+  }
+
+  bool resolve_const_value(t_const_value* const_val, t_type* ttype, bool is_force_stop_recursion) {
+    printf("hummmm00\n");
+    while (ttype->is_typedef()) {
+      if (is_force_stop_recursion) {
+        bool is_same_program = ((t_typedef*)ttype)->get_symbolic().find(".") == std::string::npos;
+        if (!is_same_program) {
+          return false;
+        }
+      }
+      ttype = ((t_typedef*)ttype)->get_type();
+    }
+
+    if (ttype->is_map() && !is_force_stop_recursion) {
+      printf("hummmm10\n");
+      printf("hummmm100 str: %s\n", const_val->get_identifier().c_str());
+      printf("hummmm1000\n");
+      const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
+      printf("hummmm101\n");
+      std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
+      printf("hummmm102\n");
+      for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
+        if( !resolve_const_value(v_iter->first, ((t_map*)ttype)->get_key_type(), is_force_stop_recursion) ||
+            !resolve_const_value(v_iter->second, ((t_map*)ttype)->get_val_type(), is_force_stop_recursion)) {
+          return false;
+        }
+      }
+      printf("hummmm103\n");
+    } else if (ttype->is_list() && !is_force_stop_recursion) {
+      printf("hummmm9\n");
+      const std::vector<t_const_value*>& val = const_val->get_list();
+      std::vector<t_const_value*>::const_iterator v_iter;
+      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+        if(!resolve_const_value((*v_iter), ((t_list*)ttype)->get_elem_type(), is_force_stop_recursion)) {
+          return false;
+        }
+      }
+    } else if (ttype->is_set() && !is_force_stop_recursion) {
+      printf("hummmm8\n");
+      const std::vector<t_const_value*>& val = const_val->get_list();
+      std::vector<t_const_value*>::const_iterator v_iter;
+      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+        if(!resolve_const_value((*v_iter), ((t_set*)ttype)->get_elem_type(), is_force_stop_recursion)) {
+          return false;
+        }
+      }
+    } else if (ttype->is_struct() && !is_force_stop_recursion) {
+      printf("hummmm7\n");
+      auto* tstruct = (t_struct*)ttype;
+      const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
+      std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
+      for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
+        t_field* field = tstruct->get_field_by_name(v_iter->first->get_string());
+        if (field == nullptr) {
+          throw "No field named \"" + v_iter->first->get_string()
+              + "\" was found in struct of type \"" + tstruct->get_name() + "\"";
+        }
+        if(!resolve_const_value(v_iter->second, field->get_type(), is_force_stop_recursion)) {
+          return false;
+        }
+      }
+    } else if (const_val->get_type() == t_const_value::CV_IDENTIFIER) {
+      if (ttype->is_enum()) {
+        printf("hummmm6\n");
+        const_val->set_enum((t_enum*)ttype);
+      } else {
+        t_const* constant = get_constant(const_val->get_identifier());
+        if (constant == nullptr) {
+          printf("hummmm5\n");
+          throw "No enum value or constant found named \"" + const_val->get_identifier() + "\"!";
+        }
+
+        // Resolve typedefs to the underlying type
+        t_type* const_type = constant->get_type()->get_true_type();
+
+        if (const_type->is_base_type()) {
+          printf("hummmm4\n");
+          switch (((t_base_type*)const_type)->get_base()) {
+          case t_base_type::TYPE_I16:
+          case t_base_type::TYPE_I32:
+          case t_base_type::TYPE_I64:
+          case t_base_type::TYPE_BOOL:
+          case t_base_type::TYPE_I8:
+            const_val->set_integer(constant->get_value()->get_integer());
+            break;
+          case t_base_type::TYPE_STRING:
+            const_val->set_string(constant->get_value()->get_string());
+            break;
+          case t_base_type::TYPE_UUID:
+            const_val->set_uuid(constant->get_value()->get_uuid());
+            break;
+          case t_base_type::TYPE_DOUBLE:
+            const_val->set_double(constant->get_value()->get_double());
+            break;
+          case t_base_type::TYPE_VOID:
+            throw "Constants cannot be of type VOID";
+          }
+        } else if (const_type->is_map()) {
+          printf("hummmm3\n");
+          const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = constant->get_value()->get_map();
+          std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
+
+          const_val->set_map();
+          for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
+            const_val->add_map(v_iter->first, v_iter->second);
+          }
+        } else if (const_type->is_list()) {
+          printf("hummmm2\n");
+          const std::vector<t_const_value*>& val = constant->get_value()->get_list();
+          std::vector<t_const_value*>::const_iterator v_iter;
+
+          const_val->set_list();
+          for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
+            const_val->add_list(*v_iter);
+          }
+        }
+      }
+    } else if (ttype->is_enum()) {
+      // enum constant with non-identifier value. set the enum and find the
+      // value's name.
+      printf("hummmm1\n");
+      auto* tenum = (t_enum*)ttype;
+      t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
+      if (enum_value == nullptr) {
+        std::ostringstream valstm;
+        valstm << const_val->get_integer();
+        throw "Couldn't find a named value in enum " + tenum->get_name() + " for value "
+            + valstm.str();
+      }
+      const_val->set_identifier(tenum->get_name() + "." + enum_value->get_name());
+      const_val->set_enum(tenum);
+    }
+    return true;
   }
 
   void clear() {
