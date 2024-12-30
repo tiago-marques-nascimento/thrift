@@ -64,6 +64,7 @@ thrift_SOURCES = src/thrift/audit/t_audit.cpp \
                  src/thrift/parse/t_set.h \
                  src/thrift/parse/t_struct.h \
                  src/thrift/parse/t_type.h \
+                 src/thrift/parse/t_scope.cc \
                  src/thrift/parse/t_typedef.cc \
                  src/thrift/parse/t_typedef.h \
                  src/thrift/platform.h

@@ -414,6 +414,14 @@ public:
   bool get_recursive() const { return recursive_; }
 
   void clear() {
+    typedefs_.clear();
+    enums_.clear();
+    consts_.clear();
+    objects_.clear();
+    structs_.clear();
+    xceptions_.clear();
+    services_.clear();
+    includes_.clear();
     if (scope_) {
       scope_->clear();
     }

@@ -36,3 +36,7 @@ const t_type* t_typedef::get_type() const {
   }
   return type_;
 }
+
+bool t_typedef::does_type_exist() {
+  return get_program()->scope()->get_type(symbolic_) != nullptr;
+}

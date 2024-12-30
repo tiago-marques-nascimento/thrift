@@ -85,6 +85,7 @@
     <ClCompile Include="src\thrift\generate\t_xsd_generator.cc" />
     <ClCompile Include="src\thrift\main.cc" />
     <ClCompile Include="src\thrift\parse\parse.cc" />
+    <ClCompile Include="src\thrift\parse\t_scope.cc" />
     <ClCompile Include="src\thrift\parse\t_typedef.cc" />
     <ClCompile Include="src\thrift\thriftl.cc" />
     <ClCompile Include="src\thrift\thrifty.cc" />

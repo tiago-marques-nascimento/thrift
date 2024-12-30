@@ -53,7 +53,32 @@ public:
     types_is_root_[name] = is_root;
   }
 
+  bool is_cleared() {
+    return is_cleared_;
+  }
+
   t_type* get_type(std::string name) { return types_[name]; }
+
+  size_t get_type_size() {
+    for (auto type: types_) {
+      if (type.first == "ads_view_type.ViewType") {
+        printf("|=> %s\n", type.first.c_str());
+        printf("|(exists)=> %i\n", (int)(type.second != nullptr));
+      }
+    }
+    return types_.size();
+  }
+
+  void get_type_size_const() const {
+    for (auto type: types_) {
+      if (type.first == "ads_view_type.ViewType") {
+        printf("||=> %s\n", type.first.c_str());
+        printf("||(exists)=> %i\n", (int)(type.second != nullptr));
+        printf("||(istypedef)=> %i %i\n", (int)(type.second->is_typedef()), (int)(type.second->is_typedef() && (((t_typedef *)type.second)->get_type() != nullptr)));
+        printf("||(what)=> %s\n", type.second->get_name().c_str());
+      }
+    }
+  }
 
   const t_type* get_type(std::string name) const {
     const auto it = types_.find(name);
@@ -80,13 +105,22 @@ public:
     return nullptr;
   }
 
-  void add_constant(std::string name, t_const* constant, bool is_root) {
-    if (constants_.find(name) != constants_.end()) {
-      throw "Enum " + name + " is already defined!";
-    } else {
-      constants_[name] = constant;
-      constants_is_root_[name] = is_root;
-    }
+  void add_constant(std::string name, t_const* constant, bool is_root);
+
+  void add_lazy_constant(std::string name, t_program* program) {
+    lazy_constants_[name] = program;
+  }
+
+  void set_lazy_on() {
+    is_lazy_ = true;
+  }
+
+  void set_lazy_off() {
+    is_lazy_ = false;
+  }
+
+  bool is_lazy() {
+    return is_lazy_;
   }
 
   t_const* get_constant(std::string name) { return constants_[name]; }
@@ -107,117 +141,34 @@ public:
     }
   }
 
-  void resolve_all_consts() {
+  std::set<t_program *> resolve_lazy_consts() {
+    std::set<t_program *> programs;
+    std::map<std::string, t_const*>::iterator iter_bck;
+    std::map<std::string, t_program*>::iterator iter;
+    for (iter = lazy_constants_.begin(); iter != lazy_constants_.end(); ++iter) {
+      programs.insert((*iter).second);
+    }
+    lazy_constants_.clear();
+    return programs;
+  }
+
+  void resolve_all_consts(bool is_force_stop_recursion) {
     std::map<std::string, t_const*>::iterator iter;
     for (iter = constants_.begin(); iter != constants_.end(); ++iter) {
-      t_const_value* cval = iter->second->get_value();
-      t_type* ttype = iter->second->get_type();
-      resolve_const_value(cval, ttype);
+      if (iter->second != nullptr) {
+        t_const_value* cval = iter->second->get_value();
+        t_type* ttype = iter->second->get_type();
+        if (
+          constants_ttype_root_scope_.find(iter->first) == constants_ttype_root_scope_.end() ||
+          !constants_ttype_root_scope_[iter->first]->is_cleared()
+        ) {
+          resolve_const_value(cval, ttype, is_force_stop_recursion);
+        }
+      }
     }
   }
 
-  void resolve_const_value(t_const_value* const_val, t_type* ttype) {
-    while (ttype->is_typedef()) {
-      ttype = ((t_typedef*)ttype)->get_type();
-    }
-
-    if (ttype->is_map()) {
-      const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
-      std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
-      for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
-        resolve_const_value(v_iter->first, ((t_map*)ttype)->get_key_type());
-        resolve_const_value(v_iter->second, ((t_map*)ttype)->get_val_type());
-      }
-    } else if (ttype->is_list()) {
-      const std::vector<t_const_value*>& val = const_val->get_list();
-      std::vector<t_const_value*>::const_iterator v_iter;
-      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-        resolve_const_value((*v_iter), ((t_list*)ttype)->get_elem_type());
-      }
-    } else if (ttype->is_set()) {
-      const std::vector<t_const_value*>& val = const_val->get_list();
-      std::vector<t_const_value*>::const_iterator v_iter;
-      for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-        resolve_const_value((*v_iter), ((t_set*)ttype)->get_elem_type());
-      }
-    } else if (ttype->is_struct()) {
-      auto* tstruct = (t_struct*)ttype;
-      const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = const_val->get_map();
-      std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
-      for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
-        t_field* field = tstruct->get_field_by_name(v_iter->first->get_string());
-        if (field == nullptr) {
-          throw "No field named \"" + v_iter->first->get_string()
-              + "\" was found in struct of type \"" + tstruct->get_name() + "\"";
-        }
-        resolve_const_value(v_iter->second, field->get_type());
-      }
-    } else if (const_val->get_type() == t_const_value::CV_IDENTIFIER) {
-      if (ttype->is_enum()) {
-        const_val->set_enum((t_enum*)ttype);
-      } else {
-        t_const* constant = get_constant(const_val->get_identifier());
-        if (constant == nullptr) {
-          throw "No enum value or constant found named \"" + const_val->get_identifier() + "\"!";
-        }
-
-        // Resolve typedefs to the underlying type
-        t_type* const_type = constant->get_type()->get_true_type();
-
-        if (const_type->is_base_type()) {
-          switch (((t_base_type*)const_type)->get_base()) {
-          case t_base_type::TYPE_I16:
-          case t_base_type::TYPE_I32:
-          case t_base_type::TYPE_I64:
-          case t_base_type::TYPE_BOOL:
-          case t_base_type::TYPE_I8:
-            const_val->set_integer(constant->get_value()->get_integer());
-            break;
-          case t_base_type::TYPE_STRING:
-            const_val->set_string(constant->get_value()->get_string());
-            break;
-          case t_base_type::TYPE_UUID:
-            const_val->set_uuid(constant->get_value()->get_uuid());
-            break;
-          case t_base_type::TYPE_DOUBLE:
-            const_val->set_double(constant->get_value()->get_double());
-            break;
-          case t_base_type::TYPE_VOID:
-            throw "Constants cannot be of type VOID";
-          }
-        } else if (const_type->is_map()) {
-          const std::map<t_const_value*, t_const_value*, t_const_value::value_compare>& map = constant->get_value()->get_map();
-          std::map<t_const_value*, t_const_value*, t_const_value::value_compare>::const_iterator v_iter;
-
-          const_val->set_map();
-          for (v_iter = map.begin(); v_iter != map.end(); ++v_iter) {
-            const_val->add_map(v_iter->first, v_iter->second);
-          }
-        } else if (const_type->is_list()) {
-          const std::vector<t_const_value*>& val = constant->get_value()->get_list();
-          std::vector<t_const_value*>::const_iterator v_iter;
-
-          const_val->set_list();
-          for (v_iter = val.begin(); v_iter != val.end(); ++v_iter) {
-            const_val->add_list(*v_iter);
-          }
-        }
-      }
-    } else if (ttype->is_enum()) {
-      // enum constant with non-identifier value. set the enum and find the
-      // value's name.
-      auto* tenum = (t_enum*)ttype;
-      t_enum_value* enum_value = tenum->get_constant_by_value(const_val->get_integer());
-      if (enum_value == nullptr) {
-        std::ostringstream valstm;
-        valstm << const_val->get_integer();
-        throw "Couldn't find a named value in enum " + tenum->get_name() + " for value "
-            + valstm.str();
-      }
-      const_val->set_identifier(tenum->get_name() + "." + enum_value->get_name());
-      const_val->set_enum(tenum);
-    }
-  }
+  bool resolve_const_value(t_const_value* const_val, t_type* ttype, bool is_force_stop_recursion);
 
   void clear() {
     std::map<std::string, bool>::iterator is_root_iter;
@@ -233,6 +184,8 @@ public:
         }
       }
     }
+    types_is_root_.clear();
+    types_.clear();
 
     std::map<std::string, t_const*>::iterator constants_iter;
     for (constants_iter = constants_.begin(); constants_iter != constants_.end(); ++constants_iter) {
@@ -246,6 +199,9 @@ public:
         }
       }
     }
+    constants_is_root_.clear();
+    constants_ttype_root_scope_.clear();
+    constants_.clear();
 
     std::map<std::string, t_service*>::iterator services_iter;
     for (services_iter = services_.begin(); services_iter != services_.end(); ++services_iter) {
@@ -259,7 +215,12 @@ public:
         }
       }
     }
+    services_is_root_.clear();
     services_.clear();
+
+    lazy_constants_.clear();
+
+    is_cleared_ = true;
   }
 
 private:
@@ -269,17 +230,24 @@ private:
   // Map of names to constants
   std::map<std::string, t_const*> constants_;
 
+  // Map of names to lazy constants
+  std::map<std::string, t_program*> lazy_constants_;
+  bool is_lazy_;
+
   // Map of names to services
   std::map<std::string, t_service*> services_;
 
-    // Map of names to types
+  // Map of names to types
   std::map<std::string, bool> types_is_root_;
 
   // Map of names to constants
   std::map<std::string, bool> constants_is_root_;
+  std::map<std::string, t_scope *> constants_ttype_root_scope_;
 
   // Map of names to services
   std::map<std::string, bool> services_is_root_;
+
+  bool is_cleared_;
 };
 
 #endif

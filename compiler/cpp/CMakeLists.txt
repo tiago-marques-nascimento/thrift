@@ -48,6 +48,7 @@ set(compiler_core
     src/thrift/generate/t_generator.cc
     src/thrift/generate/validator_parser.cc
     src/thrift/generate/validator_parser.h
+    src/thrift/parse/t_scope.cc
     src/thrift/parse/t_typedef.cc
     src/thrift/parse/parse.cc
     src/thrift/version.h

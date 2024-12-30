@@ -59,6 +59,8 @@ public:
 
   bool is_typedef() const override { return true; }
 
+  bool does_type_exist();
+
 private:
   t_type* type_;
   std::string symbolic_;

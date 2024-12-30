@@ -78,6 +78,7 @@ set(thrift_compiler_SOURCES
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/t_generator.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/generate/validator_parser.h
+    ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_scope.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/t_typedef.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/parse/parse.cc
     ${THRIFT_COMPILER_SOURCE_DIR}/src/thrift/version.h

@@ -352,7 +352,9 @@ Definition:
     {
       pdebug("Definition -> Const");
       if (g_parse_mode == PROGRAM) {
-        g_program->add_const($1);
+        if ($1 != nullptr) {
+          g_program->add_const($1);
+        }
       }
       $$ = $1;
     }
@@ -364,7 +366,7 @@ Definition:
         if (g_parent_scope != nullptr) {
           g_parent_scope->add_type(g_parent_prefix + $1->get_name(), $1, true);
         }
-        if (! g_program->is_unique_typename($1)) {
+        if (!g_scope->is_lazy() && !g_program->is_unique_typename($1)) {
           yyerror("Type \"%s\" is already defined.", $1->get_name().c_str());
           exit(1);
         }
@@ -380,7 +382,7 @@ Definition:
           g_parent_scope->add_service(g_parent_prefix + $1->get_name(), $1, true);
         }
         g_program->add_service($1);
-        if (! g_program->is_unique_typename($1)) {
+        if (!g_scope->is_lazy() && !g_program->is_unique_typename($1)) {
           yyerror("Type \"%s\" is already defined.", $1->get_name().c_str());
           exit(1);
         }
@@ -526,15 +528,36 @@ Const:
   tok_const FieldType tok_identifier '=' ConstValue CommaOrSemicolonOptional
     {
       pdebug("Const -> tok_const FieldType tok_identifier = ConstValue");
-      if (g_parse_mode == PROGRAM && !g_force_stop_recursion) {
-        validate_simple_identifier( $3);
-        g_scope->resolve_const_value($5, $2);
-        $$ = new t_const($2, $3, $5);
-        validate_const_type($$);
 
-        g_scope->add_constant($3, $$, false);
-        if (g_parent_scope != nullptr) {
-          g_parent_scope->add_constant(g_parent_prefix + $3, $$, true);
+      // Consts from same program should always be resolved.
+      if (g_parse_mode == PROGRAM) {
+        validate_simple_identifier($3);
+        if(g_scope->resolve_const_value($5, $2, g_force_stop_recursion)) { //Error here.
+          $$ = new t_const($2, $3, $5);
+          if (g_scope->is_lazy()) {
+            validate_const_type($$);
+          } else {
+            try {
+              validate_const_type($$);
+            } catch (...) {
+              $$ = nullptr;
+              if (!g_force_stop_recursion) {
+                g_scope->add_lazy_constant($3, $2->get_program());
+              }
+            }
+          }
+
+          if ($$ != nullptr) {
+            g_scope->add_constant($3, $$, false);
+            if (g_parent_scope != nullptr) {
+              g_parent_scope->add_constant(g_parent_prefix + $3, $$, true);
+            }
+          }
+        } else {
+          $$ = nullptr;
+          if (!g_force_stop_recursion) {
+            g_scope->add_lazy_constant($3, $2->get_program());
+          }
         }
       } else {
         $$ = nullptr;
@@ -831,10 +854,13 @@ Field:
       $$ = new t_field($4, $6, $2.value);
       $$->set_reference($5);
       $$->set_req($3);
-      if (!g_force_stop_recursion && $7 != nullptr) {
-        g_scope->resolve_const_value($7, $4);
-        validate_field_value($$, $7);
-        $$->set_value($7);
+      if ($7 != nullptr) {
+        if(g_scope->resolve_const_value($7, $4, g_force_stop_recursion)) {
+          validate_field_value($$, $7);
+          $$->set_value($7);
+        } else {
+          $$->set_value(nullptr);
+        }
       }
       $$->set_xsd_optional($8);
       $$->set_xsd_nillable($9);

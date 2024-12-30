@@ -27,6 +27,8 @@
  *
  */
 
+#include <chrono>
+#include <thread>
 #include <cassert>
 #include <stdlib.h>
 #include <stdio.h>
@@ -38,6 +40,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <limits.h>
+#include <signal.h>
 
 #ifdef _WIN32
 #include <windows.h> /* for GetFullPathName */
@@ -1085,8 +1088,14 @@ void generate(
   std::set<std::string>& known_includes,
   std::set<std::string>& generated_includes,
   bool force_stop_recursion,
-  int level
+  int level,
+  bool lazy
 ) {
+
+  if (lazy) {
+    program->scope()->set_lazy_on();
+  }
+
   // (tmarquesdonascimento): Parse program
   pverbose("Parse program: %s\n", program->get_path().c_str());
   parse_includes(program);
@@ -1098,7 +1107,7 @@ void generate(
   }
 
   // Oooohh, recursive code generation, hot!!
-  if (gen_recurse || !force_stop_recursion) {
+  if ((!lazy && gen_recurse) || !force_stop_recursion) {
     program->set_recursive(true);
     const vector<t_program*>& includes = program->get_includes();
     int count = 0;
@@ -1121,7 +1130,7 @@ void generate(
           count,
           includes.size()
         );
-        generate(include, program, generator_strings, known_includes, generated_includes, !gen_recurse || is_already_generated, level + 1);
+        generate(include, program, generator_strings, known_includes, generated_includes, !gen_recurse || is_already_generated, level + 1, lazy);
       } else {
           printf("Phew, able to save some resources here: %s\n", include->get_path().c_str());
       }
@@ -1140,13 +1149,44 @@ void generate(
 
     parse_types(program, parent_program, force_stop_recursion);
 
+    if (!lazy && !force_stop_recursion) {
+      std::set<t_program *> lazy_programs = program->scope()->resolve_lazy_consts();
+      if (!lazy_programs.empty()) {
+        if (parent_program != nullptr) {
+          parent_program->scope()->set_lazy_on();
+        }
+        program->scope()->set_lazy_on();
+        for (auto lazy_program : lazy_programs) {
+          if (lazy_program != nullptr) {
+            string lazy_path = lazy_program->get_path();
+            if(known_includes.find(lazy_path) == known_includes.end()) {
+              lazy_program->clear();
+              generate(
+                lazy_program, program, generator_strings, known_includes, generated_includes, false, level + 1, true
+              );
+            }
+          }
+        }
+
+        // second parsing
+        parse_types(program, parent_program, force_stop_recursion);
+
+        program->scope()->set_lazy_off();
+        if (parent_program != nullptr) {
+          parent_program->scope()->set_lazy_off();
+        }
+      }
+    }
+
+
     if (dump_docs) {
       dump_docstrings(program);
     }
 
-    if (!force_stop_recursion) {
-      // make sure all symbolic constants are properly resolved
-      program->scope()->resolve_all_consts();
+    // make sure all symbolic constants are properly resolved
+    program->scope()->resolve_all_consts(force_stop_recursion);
+
+    if (!lazy && !force_stop_recursion) {
 
       vector<string>::const_iterator iter;
       for (iter = generator_strings.begin(); iter != generator_strings.end(); ++iter) {
@@ -1183,12 +1223,14 @@ void generate(
   generated_includes.insert(path).second;
 
   // (tmarquesdonascimento) Undo recursive include parsing on two level if recursive generation is enabled
-  if (gen_recurse) {
-    vector<t_program*>& includes = program->get_includes();
-    vector<t_program*>::iterator iter;
-    for (iter = includes.begin(); iter != includes.end(); ++iter) {
-      (*iter)->clear();
-    }
+  vector<t_program*>& includes = program->get_includes();
+  vector<t_program*>::iterator iter;
+  for (iter = includes.begin(); iter != includes.end(); ++iter) {
+    (*iter)->clear();
+  }
+
+  if (lazy) {
+    program->scope()->set_lazy_off();
   }
 }
 
@@ -1220,11 +1262,27 @@ void audit(t_program* new_program,
   compare_consts(new_program->get_consts(), old_program->get_consts());
 }
 
+void segfault_sigaction(int signal, siginfo_t *si, void *arg)
+{
+    printf("Caught segfault %i at address %p with arg %p\n", signal, si->si_addr, arg);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+    exit(0);
+}
+
 /**
  * Parse it up.. then spit it back out, in pretty much every language. Alright
  * not that many languages, but the cool ones that we care about.
  */
 int main(int argc, char** argv) {
+
+  // (tmarquesdonascimento) whenever a segfault happens, we catch it and print some dumb message
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(struct sigaction));
+  sigemptyset(&sa.sa_mask);
+  sa.sa_sigaction = segfault_sigaction;
+  sa.sa_flags   = SA_SIGINFO;
+  sigaction(SIGSEGV, &sa, NULL);
+
   int i;
   std::string out_path;
   bool out_path_is_absolute = false;
@@ -1433,7 +1491,14 @@ int main(int argc, char** argv) {
     std::set<std::string> known_includes;
     std::set<std::string> generated_includes;
     std::map<std::string, bool> generated_includes_has_typedef;
-    generate(program, nullptr, generator_strings, known_includes, generated_includes, false, 0);
+    try {
+      generate(program, nullptr, generator_strings, known_includes, generated_includes, false, 0, false);
+    } catch (...) {
+      printf("Ops, mem problem happened...\n");
+      std::this_thread::sleep_for(std::chrono::milliseconds(10000));
+      exit(EXIT_FAILURE);
+    }
+    printf("Finished generating!!!\n");
     delete program;
   }
 
