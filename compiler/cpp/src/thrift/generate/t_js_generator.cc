@@ -712,7 +712,7 @@ string t_js_generator::render_react_consts() {
     "const groupByChunk = (list: any[]) => {\n"
     "    if (!list) { return []; }"
     "    const chunks: any[][] = [];\n"
-    "    list.forEach((i, count) => {\n"
+    "    list.forEach((i: any, count: number) => {\n"
     "        const currentChunk = Math.floor(count / CHUNK_LENGTH);\n"
     "        if (chunks.length > currentChunk) {\n"
     "            chunks[currentChunk].push(i);\n"
@@ -751,7 +751,7 @@ string t_js_generator::render_react_consts() {
     "            name={label}\n"
     "                placeholder='Select a value from the dropdown list'\n"
     "            value={value}\n"
-    "            onChange={(e) => setValueCallback(e.value) }\n"
+    "            onChange={(e: any) => setValueCallback(e.value) }\n"
     "          >\n"
     "          { nullable && <SelectList.Option value='null' label='null' key='null' /> }\n"
     "          <SelectList.Option value='false' label='false' key='false' />\n"
@@ -780,7 +780,7 @@ string t_js_generator::render_react_consts() {
     "            disabled={readonly}\n"
     "            placeholder='Enter a value'\n"
     "            value={value}\n"
-    "            onChange={(e) => setValueCallback( isNaN(Number(e.value)) ? '0' : e.value ) }\n"
+    "            onChange={(e: any) => setValueCallback( isNaN(Number(e.value)) ? '0' : e.value ) }\n"
     "          />\n"
     "        </Flex.Item>\n"
     "      </Flex>\n"
@@ -805,7 +805,7 @@ string t_js_generator::render_react_consts() {
     "            disabled={readonly}\n"
     "            placeholder='Enter a value'\n"
     "            value={value}\n"
-    "            onChange={(e) => setValueCallback(e.value) }\n"
+    "            onChange={(e: any) => setValueCallback(e.value) }\n"
     "          />\n"
     "        </Flex.Item>\n"
     "      </Flex>\n"
@@ -830,7 +830,7 @@ string t_js_generator::render_react_consts() {
     "            disabled={readonly}\n"
     "            placeholder='Enter a value'\n"
     "            value={value}\n"
-    "            onChange={(e) => setValueCallback(e.value) }\n"
+    "            onChange={(e: any) => setValueCallback(e.value) }\n"
     "          />\n"
     "        </Flex.Item>\n"
     "      </Flex>\n"
@@ -856,9 +856,9 @@ string t_js_generator::render_react_consts() {
     "            name={label}\n"
     "            placeholder='Select a value from the dropdown list'\n"
     "            value={`val${value}`}\n"
-    "            onChange={(e) => setValueCallback(Number(e.value.substring(3))) }\n"
+    "            onChange={(e: any) => setValueCallback(Number(e.value.substring(3))) }\n"
     "          >\n"
-    "            {list.map(item => <SelectList.Option value={`val${item.key}`} label={item.value as string} key={item.value as string} />)}\n"
+    "            {list.map((item: any) => <SelectList.Option value={`val${item.key}`} label={item.value as string} key={item.value as string} />)}\n"
     "          </SelectList>\n"
     "        </Flex.Item>\n"
     "      </Flex>\n"
@@ -1812,7 +1812,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       if (is_optional) {
         f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << (tfield)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (tfield)->get_name() << " : -1);\n";
       } else {
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << (tfield)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (tfield)->get_name() << " : " << enum_type << "[Object.values(" << enum_type << ").filter(it => typeof it === 'string')[0] as " << enum_type << "Type]);\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << (tfield)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (tfield)->get_name() << " : " << enum_type << "[Object.values(" << enum_type << ").filter((it: any) => typeof it === 'string')[0] as " << enum_type << "Type]);\n";
       }
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
@@ -1904,7 +1904,7 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
       if (is_optional) {
         f_react_ts_ << ts_indent() << "set" << capitalize(member_name) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": -1);\n";
       } else {
-        f_react_ts_ << ts_indent() << "set" << capitalize(member_name) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": " << enum_type << "[Object.values(" << enum_type << ").filter(it => typeof it === 'string')[0] as " << enum_type << "Type]);\n";
+        f_react_ts_ << ts_indent() << "set" << capitalize(member_name) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": " << enum_type << "[Object.values(" << enum_type << ").filter((it: any) => typeof it === 'string')[0] as " << enum_type << "Type]);\n";
       }
     }
   }
@@ -2144,9 +2144,9 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << " != -1) && (\n"
                 << ts_indent() << "  <ThriftInputSelectList\n";
     if (is_optional) {
-      f_react_ts_ << ts_indent() << "    list={[{key: -1, value: 'null'}, ...Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))]}\n";
+      f_react_ts_ << ts_indent() << "    list={[{key: -1, value: 'null'}, ...Object.values(" << enum_type << ").filter((value: any) => typeof value === 'string').map((it: any) => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))]}\n";
     } else {
-      f_react_ts_ << ts_indent() << "    list={Object.values(" << enum_type << ").filter(value => typeof value === 'string').map(it => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))}\n";
+      f_react_ts_ << ts_indent() << "    list={Object.values(" << enum_type << ").filter((value: any) => typeof value === 'string').map((it: any) => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))}\n";
     }
     f_react_ts_ << ts_indent() << "    value={" << member_name << "}\n";
 
