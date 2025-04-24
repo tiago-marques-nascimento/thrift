@@ -50,6 +50,9 @@ static const int64_t max_safe_integer = 0x1fffffffffffff;
 // smallest consecutive number representable by a double (-2 ^ 53 + 1)
 static const int64_t min_safe_integer = -max_safe_integer;
 
+// react component that have more than this member count will be rendered empty
+static const size_t member_max_allowed_count_for_react_component = 100;
+
 #include "thrift/generate/t_oop_generator.h"
 
 
@@ -2393,6 +2396,7 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
                   << "= \"" << tstruct->get_name() << "\";" << '\n';
 
   // members with arguments
+  size_t members_count = members.size();
   for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
     string dval = declare_field(*m_iter, false, true);
     t_type* t = get_true_type((*m_iter)->get_type());
@@ -2424,7 +2428,7 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
                   << '\n';
 
       // (tmarquesdonascimento) enable react form rendering
-      if (should_enable_react) {
+      if (should_enable_react && members_count <= member_max_allowed_count_for_react_component) {
         get_react_state_and_use_effect(tstruct, *m_iter);
       }
     }
@@ -2434,32 +2438,36 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
 
     // (tmarquesdonascimento) enable react form rendering
     if (should_enable_react) {
-      get_react_initial_use_effect(tstruct);
+      if (members_count <= member_max_allowed_count_for_react_component) {
+        get_react_initial_use_effect(tstruct);
 
-      f_react_ts_ << ts_indent() << "return (<>\n";
-      indent_up();
-
-      f_react_ts_ << ts_indent() << "<Box justifyContent='start' alignItems='baseline' padding={4}>\n"
-                  << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
-                  << ts_indent() << "    <Flex.Item flex='grow' alignSelf='end'>\n"
-                  << ts_indent() << "      <Text size={'100'}><Link accessibilityLabel='View on sourcegraph' externalLinkIcon='default' href={`https://sourcegraph.pinadmin.com/github.com/pinternal/thrift-schemas/-/blob/${'" << tstruct->get_program()->get_path() << "'.replace('/usr/home/thrift-schemas/', '')}`} target='blank'>View " << tstruct->get_name() << " in sourcegraph</Link></Text>\n"
-                  << ts_indent() << "    </Flex.Item>\n";
-
-      indent_up();
-
-      for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
-        string member_name = parse_member_name((*m_iter)->get_name());
-        t_type *member_type = (*m_iter)->get_type();
-        get_react_component(member_name, "'key'", (*m_iter)->get_req() == t_field::e_req::T_OPTIONAL, true, member_name, member_type, tstruct->get_program(), tstruct, false);
+        f_react_ts_ << ts_indent() << "return (<>\n";
+        indent_up();
+  
+        f_react_ts_ << ts_indent() << "<Box justifyContent='start' alignItems='baseline' padding={4}>\n"
+                    << ts_indent() << "  <Flex justifyContent='start' alignItems='baseline' direction='column'>\n"
+                    << ts_indent() << "    <Flex.Item flex='grow' alignSelf='end'>\n"
+                    << ts_indent() << "      <Text size={'100'}><Link accessibilityLabel='View on sourcegraph' externalLinkIcon='default' href={`https://sourcegraph.pinadmin.com/github.com/pinternal/thrift-schemas/-/blob/${'" << tstruct->get_program()->get_path() << "'.replace('/usr/home/thrift-schemas/', '')}`} target='blank'>View " << tstruct->get_name() << " in sourcegraph</Link></Text>\n"
+                    << ts_indent() << "    </Flex.Item>\n";
+  
+        indent_up();
+  
+        for (m_iter = members.begin(); m_iter != members.end(); ++m_iter) {
+          string member_name = parse_member_name((*m_iter)->get_name());
+          t_type *member_type = (*m_iter)->get_type();
+          get_react_component(member_name, "'key'", (*m_iter)->get_req() == t_field::e_req::T_OPTIONAL, true, member_name, member_type, tstruct->get_program(), tstruct, false);
+        }
+  
+        indent_down();
+  
+        f_react_ts_ << ts_indent() << "  </Flex>\n"
+                    << ts_indent() << "</Box>\n";
+  
+        indent_down();
+        f_react_ts_ << ts_indent() << "</>)\n";
+      } else {
+        f_react_ts_ << ts_indent() << "return (<></>)\n";
       }
-
-      indent_down();
-
-      f_react_ts_ << ts_indent() << "  </Flex>\n"
-                  << ts_indent() << "</Box>\n";
-
-      indent_down();
-      f_react_ts_ << ts_indent() << "</>)\n";
     }
   }
 
