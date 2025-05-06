@@ -1765,9 +1765,9 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
                     << "prop" << tstruct->get_name() << "." << (tfield)->get_name() << " = ";
 
         if (is_optional) {
-          f_react_ts_ << member_name << " ? Buffer.from(" << member_name << "?? '') : undefined;\n";
+          f_react_ts_ << member_name << " ? Buffer.from(" << member_name << "?? '', 'hex') : undefined;\n";
         } else {
-          f_react_ts_ << "Buffer.from(" << member_name << "?? '');\n";
+          f_react_ts_ << "Buffer.from(" << member_name << "?? '', 'hex');\n";
         }
 
         indent_down();
@@ -1940,7 +1940,7 @@ string t_js_generator::new_react_object(t_type *member_type, bool first) {
     } else if (
       true_member_type->is_binary()
     ) {
-      return "Buffer.from('')";
+      return "Buffer.from('', 'hex')";
     } else {
       return "''";
     }
