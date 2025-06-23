@@ -94,7 +94,7 @@ out2.struct_thing = out;
 out2.i32_thing = 5;
 
 export var crazy = new ttypes.Insanity({
-  "userMap":[{ key: 5, value: new Int64(5) }, { key: 8, value: new Int64(8) }],
+  "userMap":[{ key: 5, value: new Int64(5), __key__ttype: "Numberz", __value__ttype: "i64" }, { key: 8, value: new Int64(8), __key__ttype: "Numberz", __value__ttype: "i64" }],
   "xtructs":[new ttypes.Xtruct({
       "string_thing":"Goodbye4",
       "byte_thing":4,

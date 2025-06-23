@@ -60,8 +60,8 @@ export function ThriftTestDriver(client: ThriftTest.Client, callback: (status: s
 
     client.testMapMap(42, function(err, response) {
       var expected: typeof response = [
-        { key: 4, value: [ { key: 1, value: 1 }, { key: 2, value: 2 }, { key: 3, value: 3 }, { key: 4, value: 4 } ] },
-        { key: -4, value: [ { key: -4, value :-4 }, { key: -3, value: -3 }, { key: -2, value: -2 }, { key: -1, value: -1 } ] }
+        { key: 4, value: [ { key: 1, value: 1, __key__ttype: "i32", __value__ttype: "i32" }, { key: 2, value: 2, __key__ttype: "i32", __value__ttype: "i32" }, { key: 3, value: 3, __key__ttype: "i32", __value__ttype: "i32" }, { key: 4, value: 4, __key__ttype: "i32", __value__ttype: "i32" } ], __key__ttype: "i32", __value__ttype: "i32" },
+        { key: -4, value: [ { key: -4, value :-4, __key__ttype: "i32", __value__ttype: "i32" }, { key: -3, value: -3, __key__ttype: "i32", __value__ttype: "i32" }, { key: -2, value: -2, __key__ttype: "i32", __value__ttype: "i32" }, { key: -1, value: -1, __key__ttype: "i32", __value__ttype: "i32" } ], __key__ttype: "i32", __value__ttype: "i32" }
       ];
       assert.error(err, 'testMapMap: no callback error');
       assert.deepEqual(expected, response, "testMapMap");
