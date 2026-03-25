@@ -808,7 +808,7 @@ void t_js_generator::generate_enum(t_enum* tenum) {
    */
   if (gen_ts_) {
     f_types_ts_ << ts_print_doc(tenum) << ts_indent() << ts_export() << ts_type() << tenum->get_name()
-                << "Type = \n";
+                << "_Type = \n";
   }
 
   indent_up();
@@ -1217,7 +1217,7 @@ void t_js_generator::get_react_state_and_use_effect(t_struct *tstruct, t_field* 
       if (is_optional) {
         f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << (tfield)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (tfield)->get_name() << " : -1);\n";
       } else {
-        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << (tfield)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (tfield)->get_name() << " : " << enum_type << "[fst(" << enum_type << ") as " << enum_type << "Type]);\n";
+        f_react_ts_ << ts_indent() << "const [" << member_name << ", set" << capitalize(member_name) << "] = useState<number>(prop" << tstruct->get_name() << "." << (tfield)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (tfield)->get_name() << " : " << enum_type << "[fst(" << enum_type << ") as " << enum_type << "_Type]);\n";
       }
       f_react_ts_ << ts_indent() << "useEffect(() => {\n";
       indent_up();
@@ -1312,7 +1312,7 @@ void t_js_generator::get_react_initial_use_effect(t_struct *tstruct) {
       if (is_optional) {
         f_react_ts_ << ts_indent() << "set" << capitalize(member_name) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": -1);\n";
       } else {
-        f_react_ts_ << ts_indent() << "set" << capitalize(member_name) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": " << enum_type << "[fst(" << enum_type << ") as " << enum_type << "Type]);\n";
+        f_react_ts_ << ts_indent() << "set" << capitalize(member_name) << "(prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << " != null ? prop" << tstruct->get_name() << "." << (*m_iter)->get_name() << ": " << enum_type << "[fst(" << enum_type << ") as " << enum_type << "_Type]);\n";
       }
     }
   }
@@ -1552,9 +1552,9 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
     f_react_ts_ << ts_indent() << "<>{(!hideNullFields || " << member_name << " != -1) && (\n"
                 << ts_indent() << "  <ThriftInputSelectList\n";
     if (is_optional) {
-      f_react_ts_ << ts_indent() << "    list={[{key: -1, value: 'null'}, ...Object.values(" << enum_type << ").filter((value: any) => typeof value === 'string').map((it: any) => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))]}\n";
+      f_react_ts_ << ts_indent() << "    list={[{key: -1, value: 'null'}, ...Object.values(" << enum_type << ").filter((value: any) => typeof value === 'string').map((it: any) => ({key: " << enum_type << "[it as " << enum_type << "_Type], value: it}))]}\n";
     } else {
-      f_react_ts_ << ts_indent() << "    list={Object.values(" << enum_type << ").filter((value: any) => typeof value === 'string').map((it: any) => ({key: " << enum_type << "[it as " << enum_type << "Type], value: it}))}\n";
+      f_react_ts_ << ts_indent() << "    list={Object.values(" << enum_type << ").filter((value: any) => typeof value === 'string').map((it: any) => ({key: " << enum_type << "[it as " << enum_type << "_Type], value: it}))}\n";
     }
     f_react_ts_ << ts_indent() << "    value={" << member_name << "}\n";
 
