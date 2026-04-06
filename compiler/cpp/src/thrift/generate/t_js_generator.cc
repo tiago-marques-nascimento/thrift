@@ -1607,17 +1607,17 @@ void t_js_generator::get_react_component(string member_name, string key_name, bo
                 << ts_indent() << "    renderStruct={() => {\n";
 
     if (true_member_type->get_program() != program) {
-      f_react_ts_ << ts_indent() << "      const " << true_member_type->get_name() << "Form = lazy(() => import('./" + (true_member_type->get_program()->get_name() + "_react") + "').then(module => { return { default: module." << true_member_type->get_name() << "Form } }));\n";
+      f_react_ts_ << ts_indent() << "      const " << capitalize(true_member_type->get_name()) << "Form = lazy(() => import('./" + (true_member_type->get_program()->get_name() + "_react") + "').then(module => { return { default: module." << capitalize(true_member_type->get_name()) << "Form } }));\n";
     }
 
     if (true_member_type->get_program() == program) {
       f_react_ts_ << ts_indent() << "      return (\n"
-                  << ts_indent() << "        <" << true_member_type->get_name() << "Form\n";
+                  << ts_indent() << "        <" << capitalize(true_member_type->get_name()) << "Form\n";
       indent_down();
     } else {
       f_react_ts_ << ts_indent() << "      return (\n"
                   << ts_indent() << "        <Suspense fallback={<div style={{ fontSize: \"12px\" }}>Loading Struct...</div>}>\n"
-                  << ts_indent() << "          <" << true_member_type->get_name() << "Form\n";
+                  << ts_indent() << "          <" << capitalize(true_member_type->get_name()) << "Form\n";
     }
 
     if (use_setter) {
@@ -1746,7 +1746,7 @@ void t_js_generator::generate_js_struct_definition(ostream& out,
                     << ts_indent() << "  hideNullFields: boolean;\n"
                     << ts_indent() << "};\n\n";
         f_react_ts_ << ts_indent() << ts_export() << "const "
-                    << tstruct->get_name() << "Form = ({prop" << tstruct->get_name() << ", setProp" << tstruct->get_name() << ", readonly, hideNullFields}: " << tstruct->get_name() << "Props) => {\n";
+                    << capitalize(tstruct->get_name()) << "Form = ({prop" << tstruct->get_name() << ", setProp" << tstruct->get_name() << ", readonly, hideNullFields}: " << tstruct->get_name() << "Props) => {\n";
       }
     }
   } else {
